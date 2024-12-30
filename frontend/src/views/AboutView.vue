@@ -1,9 +1,7 @@
 <template>
   <main>
     <div class="about">
-      <h1>This is an about page</h1>
-      <!-- 使用响应式的数据 fetchData 显示用户信息 -->
-      <b>{{ fetchData?.username }}</b>
+      <MarkdownRander :content="markdownContent"></MarkdownRander>
     </div>
   </main>
 </template>
@@ -11,13 +9,35 @@
 <script setup lang="ts">
 import {onMounted, ref} from 'vue';
 import {get} from '@/http'; // 导入你封装的 http 请求函数
+import MarkdownRander from "@/components/MarkdownRander.vue";
 
 // 定义 User 类型
 interface User {
   user_id: number;
   username: string;
 }
+const markdownContent = `
+# Hello World
 
+> This is a paragraph with some **bold** text and [a link](https://example.com).
+
+
+\`\`\`python
+# 全局异常处理，统一错误响应格式
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "code": exc.status_code,
+            "message": exc.detail,
+            "data": None,
+            "error": exc.detail
+        }
+    )
+
+\`\`\`
+`;
 // 使用 ref 创建响应式的 fetchData
 const fetchData = ref<User | null>(null);
 
