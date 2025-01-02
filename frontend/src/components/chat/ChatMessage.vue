@@ -1,29 +1,23 @@
 <template>
-  <div :class="['chat-message', message.sender]">
+  <div :class="['chat-message', message.role]">
     <div class="avatar" v-if="isAvatarValid">
       <img
-        :src="message.sender === 'user' ? userAvatar : botAvatar"
+        :src="message.role === 'user' ? userAvatar : botAvatar"
         alt="Avatar"
         @error="handleAvatarError"
       />
     </div>
     <div class="fallback-avatar" v-else>
-      <span>{{ message.sender.charAt(0).toUpperCase() }}</span> <!-- 只显示首字母 -->
+      <span>{{ message.role.charAt(0).toUpperCase() }}</span> <!-- 只显示首字母 -->
     </div>
-    <MarkdownRander :content="message.text" />
+    <MarkdownRander :content="message.content"/>
   </div>
 </template>
 
 <script setup lang="ts">
 import {defineProps, ref} from 'vue';
 import MarkdownRander from "@/components/MarkdownRander.vue";
-
-interface Message {
-  id: number;
-  text: string;
-  sender: string;  // sender can be 'user' or 'bot'
-}
-
+import type { Message } from '@/types/chat.ts';
 const props = defineProps<{ message: Message }>();
 
 const userAvatar = 'path/to/user-avatar.png'; // 用户头像路径

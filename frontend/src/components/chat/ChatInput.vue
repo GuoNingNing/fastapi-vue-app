@@ -13,13 +13,13 @@ const inputText = ref('');
 
 // 定义发送消息的事件
 const emit = defineEmits<{
-  (event: 'sendMessage', message: string): void;
+  (event: 'ask', message: string): void;
 }>();
 
 // 发送消息的处理函数
 const handleSend = () => {
   if (inputText.value.trim()) {
-    emit('sendMessage', inputText.value.trim()); // 触发 sendMessage 事件
+    emit('ask', inputText.value.trim()); // 触发 sendMessage 事件
     inputText.value = ''; // 清空输入框
   }
 };

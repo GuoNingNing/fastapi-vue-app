@@ -25,5 +25,15 @@ class RedisSettings(BaseSettings):
         env_file = ".env"
 
 
+class OpenaiSettings(BaseSettings):
+    """redis"""
+
+    OPENAI_API_KEY: str = None
+    OPENAI_BASE_URL: str = None
+
+    class Config:
+        env_file = ".env"
+
 db_settings = Settings()
 redis_settings = RedisSettings()
+openai_settings = OpenaiSettings()
