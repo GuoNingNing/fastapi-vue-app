@@ -1,9 +1,9 @@
 <template>
   <div class="layout-wrapper">
-<!--    <header class="header">-->
-<!--      <AppLogo />-->
-<!--      <AppHeader />-->
-<!--    </header>-->
+    <header class="header">
+      <AppLogo />
+      <AppHeader />
+    </header>
     <div class="main-container">
       <AppSidebar />
       <MainContent>
@@ -17,11 +17,11 @@
 </template>
 
 <script lang="ts">
-import AppLogo from "@/components/AppLogo.vue";
-import AppHeader from "@/components/AppHeader.vue";
-import AppSidebar from "@/components/AppSidebar.vue";
-import AppFooter from "@/components/AppFooter.vue";
-import MainContent from "@/components/MainContent.vue";
+import AppLogo from "@/layouts/AppLogo.vue";
+import AppHeader from "@/layouts/AppHeader.vue";
+import AppSidebar from "@/layouts/AppSidebar.vue";
+import AppFooter from "@/layouts/AppFooter.vue";
+import MainContent from "@/layouts/MainContent.vue";
 
 export default {
   components: {
@@ -46,26 +46,23 @@ export default {
 /* Header 样式 */
 .header {
   display: flex;
+  height: 60px;
   align-items: center;
   justify-content: space-between;
   padding: 15px 30px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 /* Main 部分 */
 .main-container {
   display: flex;
+  height: calc(100vh - 120px);
   flex: 1;
   background-color: #f0f2f5;
 }
 
 /* Footer 样式 */
 .footer {
-  padding: 15px;
-  background-color: #ffffff;
+  height: 60px;
   text-align: center;
-  border-top: 1px solid #eaeaea;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
 }
 </style>

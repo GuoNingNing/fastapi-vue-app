@@ -1,37 +1,40 @@
-import type {AxiosInstance, AxiosRequestConfig, AxiosResponse, Method} from 'axios'; // 导入 AxiosInstance 类型
+import type {AxiosInstance, AxiosRequestConfig, AxiosResponse, Method} from 'axios'; // 导入 Axios 类型
 import axios from 'axios';
+import router from './router'; // 导入 router 实例
 
 // 创建一个 axios 实例
 const http: AxiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:8000',  // 设置你的 API 基础 URL
+  baseURL: 'http://127.0.0.1:8000/api',  // 设置你的 API 基础 URL
   timeout: 10000,  // 设置请求超时时间
 });
 
 // 请求拦截器
-// http.interceptors.request.use(
-//   (config: AxiosRequestConfig) => {
-//     const token = localStorage.getItem('token');
-//     if (token) {
-//       config.headers['Authorization'] = `Bearer ${token}`;
-//     }
-//     return config;
-//   },
-//   (error) => {
-//     return Promise.reject(error);
-//   }
-// );
+http.interceptors.request.use(
+  (config) => {
+    const access_token = localStorage.getItem('access_token'); // 假设 token 存储在 localStorage 中
+    console.log("access_token ", access_token)
+    if (access_token) {
+      config.headers['Authorization'] = `Bearer ${access_token}`;
+    } else {
+      router.push({name: 'Login'});
+    }
+    return config;
+  },
+  (error) => {
+    // 处理请求错误
+    return Promise.reject(error);
+  }
+);
 
 // 响应拦截器
 http.interceptors.response.use(
   (response: AxiosResponse) => {
-    // 处理响应数据（根据 FastAPI 返回的通用结构）
-    const responseData = response.data as ResponseModel;
-    if (responseData.code === 200) {
+    if (response.status === 200) {
       // 如果返回的状态码是 200，直接返回数据部分
-      return responseData.data;
+      return response.data;
     } else {
       // 如果状态码不是 200，则抛出错误，方便后续处理
-      return Promise.reject(responseData);
+      return Promise.reject(new Error(JSON.stringify(response) || '请求失败'));
     }
   },
   (error) => {
@@ -66,21 +69,16 @@ http.interceptors.response.use(
   }
 );
 
+
 // 通用的请求函数
-interface RequestParams<T> {
+interface RequestParams {
   url: string;
-  data?: T;
+  data?: Record<string, unknown>;  // data 改为 Record 类型
   method?: Method;
-  params?: T;
+  params?: Record<string, unknown>;  // params 改为 Record 类型
 }
 
-export interface ResponseModel<T> {
-  code: number;  // 状态码
-  message: string;  // 响应信息
-  data?: T;  // 数据内容
-  error?: string;  // 错误信息
-}
-
+// 通用请求函数
 export async function request<T>({url, data, method = 'GET', params}: RequestParams): Promise<T> {
   try {
     const config: AxiosRequestConfig = {
@@ -90,10 +88,7 @@ export async function request<T>({url, data, method = 'GET', params}: RequestPar
       params,
     };
 
-    const response: AxiosResponse<ResponseModel<T>> = await http(config);
-    console.log(response)
-    // FastAPI 返回的格式是通用的 ResponseModel
-    return response;
+    return http(config);  // 返回数据部分
   } catch (error) {
     console.error('请求失败', error);
     throw error;
@@ -101,22 +96,22 @@ export async function request<T>({url, data, method = 'GET', params}: RequestPar
 }
 
 // GET 请求
-export function get<T>(url: string, params?: RequestParams): Promise<T> {
+export function get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
   return request<T>({url, method: 'GET', params});
 }
 
 // POST 请求
-export function post<T>(url: string, data?: RequestParams): Promise<T> {
+export function post<T>(url: string, data?: Record<string, unknown>): Promise<T> {
   return request<T>({url, method: 'POST', data});
 }
 
 // PUT 请求
-export function put<T>(url: string, data?: RequestParams): Promise<T> {
+export function put<T>(url: string, data?: Record<string, unknown>): Promise<T> {
   return request<T>({url, method: 'PUT', data});
 }
 
 // DELETE 请求
-export function del<T>(url: string, data?: RequestParams): Promise<T> {
+export function del<T>(url: string, data?: Record<string, unknown>): Promise<T> {
   return request<T>({url, method: 'DELETE', data});
 }
 

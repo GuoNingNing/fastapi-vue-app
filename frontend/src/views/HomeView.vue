@@ -3,7 +3,7 @@
     <div class="chat-window">
       <ChatMessage v-for="message in messages" :key="message.id" :message="message"/>
     </div>
-    <ChatInput @sendMessage="sendMessage"/>
+    <ChatInput @ask="ask"/>
   </div>
 </template>
 
@@ -12,26 +12,10 @@ import {ref} from 'vue';
 import ChatMessage from '@/components/chat/ChatMessage.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
 
-const c = `
-# Hello World
-
-This is a paragraph with some **bold** text and [a link](https://example.com).
-
-\`\`\`javascript
-function helloWorld() {
-  console.log("Hello, World!");
-}
-\`\`\`
-`
-
-const messages = ref<{ id: number; text: string; sender: string }[]>([{
-  id: Date.now(),
-  text: c,
-  sender: 'bot'
-}]);
+const messages = ref<{ id: number; text: string; sender: string }[]>([]);
 
 // 发送消息
-const sendMessage = (message: string) => {
+const ask = (message: string) => {
   messages.value.push({id: Date.now(), text: message, sender: 'user'});
   // 假设后台返回聊天消息
   setTimeout(() => {

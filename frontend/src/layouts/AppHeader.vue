@@ -16,8 +16,6 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 10px 20px;
-  background-color: #333;
-  color: #000000;
 }
 
 .title {

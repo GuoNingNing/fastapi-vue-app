@@ -16,6 +16,7 @@ export default {
       menuItems: [
         {name: "首页", path: "/home"},
         {name: "关于", path: "/about"},
+        {name: "登录", path: "/login"},
         // 你可以根据需要动态生成更多菜单项
       ],
     };

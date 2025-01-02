@@ -1,7 +1,7 @@
 <template>
   <main>
     <div class="about">
-      <MarkdownRander :content="markdownContent"></MarkdownRander>
+      <MarkdownRander :content="userInfo"></MarkdownRander>
     </div>
   </main>
 </template>
@@ -11,12 +11,8 @@ import {onMounted, ref} from 'vue';
 import {get} from '@/http'; // 导入你封装的 http 请求函数
 import MarkdownRander from "@/components/MarkdownRander.vue";
 
-// 定义 User 类型
-interface User {
-  user_id: number;
-  username: string;
-}
-const markdownContent = `
+// 使用 ref 创建响应式的 fetchData
+const userInfo = ref<string>(`
 # Hello World
 
 > This is a paragraph with some **bold** text and [a link](https://example.com).
@@ -37,19 +33,23 @@ async def http_exception_handler(request, exc: HTTPException):
     )
 
 \`\`\`
-`;
-// 使用 ref 创建响应式的 fetchData
-const fetchData = ref<User | null>(null);
+`);
 
 // 获取用户数据的异步函数
 const fetchUserData = async () => {
-  try {
-    // 获取用户数据，假设 `/user/1` 是有效的 API 路径
-    const user = await get<User>('/user/1');
-    fetchData.value = user;
-  } catch (err) {
+  get<object>('/users/me').then(user => {
+    userInfo.value += `
+
+\`\`\`json
+${JSON.stringify(user, null, 2)}
+\`\`\`
+    `;
+
+    console.log(userInfo.value)
+  }).catch(err => {
     console.error('Error fetching user data:', err);
-  }
+  })
+
 };
 
 // 在组件加载时获取数据

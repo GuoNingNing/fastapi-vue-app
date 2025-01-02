@@ -1,0 +1,12 @@
+version: '3.8'  # 您可以根据 Docker Compose 的版本进行调整
+services:
+  redis:
+    image: redis:6-alpine  # 使用最新的 Redis 官方镜像
+    container_name: my_redis  # 容器的名称
+    ports:
+      - "6379:6379"  # 映射宿主机的 6379 端口到容器的 6379 端口
+    volumes:
+      - redis_data:/data  # 使用命名卷来持久化数据
+
+volumes:
+  redis_data:  # 定义一个命名卷
