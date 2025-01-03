@@ -1,7 +1,7 @@
 <template>
   <main>
     <div class="about">
-      <MarkdownRander :content="userInfo"></MarkdownRander>
+      <MarkdownRander id="aaa" :content="userInfo"></MarkdownRander>
     </div>
   </main>
 </template>
@@ -12,28 +12,7 @@ import {get} from '@/http'; // 导入你封装的 http 请求函数
 import MarkdownRander from "@/components/MarkdownRander.vue";
 
 // 使用 ref 创建响应式的 fetchData
-const userInfo = ref<string>(`
-# Hello World
-
-> This is a paragraph with some **bold** text and [a link](https://example.com).
-
-
-\`\`\`python
-# 全局异常处理，统一错误响应格式
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc: HTTPException):
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "code": exc.status_code,
-            "message": exc.detail,
-            "data": None,
-            "error": exc.detail
-        }
-    )
-
-\`\`\`
-`);
+const userInfo = ref<string>(``);
 
 // 获取用户数据的异步函数
 const fetchUserData = async () => {

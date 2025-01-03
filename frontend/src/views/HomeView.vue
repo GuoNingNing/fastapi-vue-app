@@ -1,18 +1,24 @@
 <template>
-  <div class="chat-container">
-    <div class="chat-window" ref="chatWindow">
-      <ChatMessage v-for="message in messages" :message="message"/>
-      <MarkdownRander :content="tmp_content"/>
-    </div>
-    <ChatInput @ask="ask"/>
+  <div class="common-layout">
+    <el-container>
+      <el-main>
+        <el-scrollbar>
+          <ChatMessage :index="index" :key="index" v-for="(message, index) in messages" :message="message"/>
+          <MarkdownRander id="md_0" :content="tmp_content"/>
+        </el-scrollbar>
+      </el-main>
+      <el-footer>
+        <ChatInput @ask="ask" @clean="clean"/>
+      </el-footer>
+    </el-container>
   </div>
 </template>
 
 <script setup lang="ts">
-import {onMounted, ref, nextTick} from 'vue';
+import {nextTick, onMounted, ref} from 'vue';
 import ChatMessage from '@/components/chat/ChatMessage.vue';
 import ChatInput from '@/components/chat/ChatInput.vue';
-import {get, post} from '@/http.ts'
+import {get} from '@/http.ts'
 import type {Message} from '@/types/chat.ts'
 import MarkdownRander from "@/components/MarkdownRander.vue";
 
@@ -20,6 +26,11 @@ const messages = ref<Message[]>([]);
 const tmp_content = ref<string>('');
 
 const access_token = localStorage.getItem('access_token')
+
+async function clean() {
+  await get<string>('/gpt/clean')
+  messages.value = []
+}
 
 async function ask(content: string) {
   messages.value.push({content: content, role: 'user'});
@@ -31,7 +42,7 @@ async function ask(content: string) {
     },
   });
 
-  const reader = response.body.getReader();
+  const reader = response.body?.getReader();
   const decoder = new TextDecoder();
   let done, value;
 
@@ -71,27 +82,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.chat-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 10px;
-  border-radius: 8px;
-  background-color: #f9f9f9;
-}
 
-.chat-window {
-  flex: 1;
-  overflow-y: auto;
-  padding: 10px;
-  margin-bottom: 10px;
-}
-
-.chat-input {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 </style>

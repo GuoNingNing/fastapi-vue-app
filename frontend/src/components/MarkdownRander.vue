@@ -1,16 +1,17 @@
 <template>
-  <div class="markdown" v-html="compiledMarkdown"/>
+  <div :id="id" class="markdown" v-html="compiledMarkdown"/>
 </template>
 
 <script setup lang="ts">
-import { defineProps, onMounted, ref, watch, nextTick } from 'vue';
-import { marked } from 'marked';
+import {defineProps, onMounted, ref, watch} from 'vue';
+import {marked} from 'marked';
 import hljs from 'highlight.js';
 // 导入所需的主题
 import 'highlight.js/styles/github.css'; // 示例：选择 GitHub 主题
 
 const props = defineProps<{
-  content: string; // 接受一个 Markdown 字符串作为 props
+  id: string
+  content: string;
 }>();
 
 const compiledMarkdown = ref('');
@@ -19,13 +20,19 @@ const compiledMarkdown = ref('');
 const renderer = new marked.Renderer();
 
 // 重写代码块渲染方法
-renderer.code = ({ text, lang }) => {
-  const language = lang || 'plaintext'; // 如果没有提供语言，默认为 plaintext
-  // 使用 highlight.js 进行代码高亮
-  const highlighted = hljs.highlight(text, { language }).value;
+renderer.code = ({text, lang}) => {
+  const language = lang || 'plaintext';
+  const highlighted = hljs.highlight(text, {language}).value;
+
   return `
-  <div><span>${language}</span><button class="copy-button">复制</button>
-  <pre><code class="hljs ${language}">${highlighted}</code></pre>
+  <div>
+    <div style="height: 35px;line-height: 35px;background-color: aliceblue; padding: 0 10px" >
+      <el-tag type="primary">${language}</el-tag>
+      <button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.querySelector('code').innerText); this.textContent='已复制';" class="copy-button" style="float: right;height:35px;line-height: 35px; border: none; padding: 0 10px;">复制</button>
+    </div>
+    <div>
+        <pre><code class="hljs ${language}">${highlighted}</code></pre>
+    </div>
   </div>
   `;
 };
@@ -49,50 +56,11 @@ watch(() => props.content, async (newContent) => {
   compiledMarkdown.value = await renderMarkdown(newContent);
 });
 
-// 复制到剪贴板的方法
-async function copyToClipboard(text: string) {
-  try {
-    await navigator.clipboard.writeText(text);
-    console.log('Text copied to clipboard:', text);
-  } catch (err) {
-    console.error('Failed to copy text:', err);
-  }
-}
-
 // 在组件挂载时渲染初始内容
 onMounted(async () => {
   compiledMarkdown.value = await renderMarkdown(props.content);
-
-  // 使用 nextTick 确保 DOM 渲染完毕
-  await nextTick(() => {
-    const buttons = document.querySelectorAll('.copy-button');
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => {
-        // 使用 button 的父元素查找 code
-        const codeBlock = button.closest('div')?.querySelector('code');
-        if (codeBlock) {
-          copyToClipboard(codeBlock.innerText);
-        }
-      }, { once: true });
-    });
-  });
 });
 </script>
 
 <style scoped>
-.copy-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  padding: 5px 10px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.copy-button:hover {
-  background-color: #0056b3;
-}
 </style>
