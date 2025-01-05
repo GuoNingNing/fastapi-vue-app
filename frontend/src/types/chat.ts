@@ -6,3 +6,8 @@ export interface Message {
   function_call?: string,
   tool_calls?: string
 }
+
+export interface User {
+  username: string
+  nickname: string
+}

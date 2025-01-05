@@ -1,0 +1,13 @@
+@font-face {
+  font-family: "weiruan";
+  src: url("./GenJyuuGothic-P-Normal.ttf") format("truetype");
+}
+
+.weiruan {
+  font-family: "weiruan", monospace !important;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

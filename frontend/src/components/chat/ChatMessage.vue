@@ -1,8 +1,5 @@
 <template>
   <div :class="['chat-message', message.role]">
-    <div class="fallback-avatar" v-if="message.role !== 'user'">
-      <span>{{ message.role.charAt(0).toUpperCase() }}</span> <!-- 只显示首字母 -->
-    </div>
     <MarkdownRander :id="'md_' + index" :content="message.content"/>
   </div>
 </template>

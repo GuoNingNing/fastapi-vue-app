@@ -21,17 +21,17 @@ const renderer = new marked.Renderer();
 
 // 重写代码块渲染方法
 renderer.code = ({text, lang}) => {
-  const language = lang || 'plaintext';
+  const language = lang == 'vue' ? 'html' : lang || 'plaintext';
   const highlighted = hljs.highlight(text, {language}).value;
 
   return `
   <div>
-    <div style="height: 35px;line-height: 35px;background-color: aliceblue; padding: 0 10px" >
+    <div class="code-toolbar" >
       <el-tag type="primary">${language}</el-tag>
-      <button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.querySelector('code').innerText); this.textContent='已复制';" class="copy-button" style="float: right;height:35px;line-height: 35px; border: none; padding: 0 10px;">复制</button>
+      <button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.querySelector('code').innerText); this.textContent='已复制';" class="copy-button" style="">复制</button>
     </div>
     <div>
-        <pre><code class="hljs ${language}">${highlighted}</code></pre>
+        <pre><code class="weiruan hljs ${language}">${highlighted}</code></pre>
     </div>
   </div>
   `;
@@ -63,4 +63,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+
 </style>

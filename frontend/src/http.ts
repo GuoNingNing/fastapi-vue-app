@@ -5,14 +5,13 @@ import router from './router'; // 导入 router 实例
 // 创建一个 axios 实例
 const http: AxiosInstance = axios.create({
   baseURL: 'http://127.0.0.1:8000/api',  // 设置你的 API 基础 URL
-  timeout: 10000,  // 设置请求超时时间
+  timeout: 100000,  // 设置请求超时时间
 });
 
 // 请求拦截器
 http.interceptors.request.use(
   (config) => {
-    const access_token = localStorage.getItem('access_token'); // 假设 token 存储在 localStorage 中
-    console.log("access_token ", access_token)
+    const access_token = localStorage.getItem('access_token');
     if (access_token) {
       config.headers['Authorization'] = `Bearer ${access_token}`;
     } else {

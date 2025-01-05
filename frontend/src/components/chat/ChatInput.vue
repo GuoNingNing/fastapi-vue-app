@@ -1,14 +1,15 @@
 <template>
   <div class="chat-input">
-    <!-- 输入框，绑定双向数据，按回车键触发发送事件 -->
-    <el-input
-      type="textarea"
-      :rows="3"
-      v-model="inputText"
-      @keyup.enter="handleSend"
-      placeholder="Type a message..."
-      :disabled="loading"
-    ></el-input>
+    <div style="width: 80%;">
+      <el-input
+        type="textarea"
+        :rows="3"
+        v-model="inputText"
+        @keydown="handleKeydown"
+        placeholder="Type a message..."
+        :disabled="loading"
+      ></el-input>
+    </div>
     <div style="width: 10%;">
       <el-button type="info" :icon="Message" circle :disabled="loading" @click="handleSend"/>
       <el-button type="danger" :icon="Delete" @click="handleClean" circle/>
@@ -25,6 +26,20 @@ import {Delete, Message} from "@element-plus/icons-vue";
 const inputText = ref('');
 const disabled = ref(true);  // 初始禁用
 const loading = ref(false);  // 处理 loading 状态
+
+const handleKeydown = async (event) => {
+  // 检查是否按下了 Enter 键
+  if (event.key === 'Enter') {
+    if (event.shiftKey) {
+      // 如果 Shift 键也按下，允许换行
+      return;
+    } else {
+      // 如果只按下 Enter，调用发送消息的方法
+      event.preventDefault(); // 阻止默认换行行为
+      handleSend();
+    }
+  }
+}
 
 // 定义事件触发，向父组件传递发送消息
 const emit = defineEmits<{
@@ -82,7 +97,6 @@ const handleClean = () => {
   padding: 10px;
   border-radius: 5px;
   cursor: pointer;
-  background-color: #007bff;
   color: white;
   border: none;
   transition: background-color 0.3s;
