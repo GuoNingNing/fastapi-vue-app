@@ -7,8 +7,8 @@
     @keydown.enter.prevent="handerEnter"
     class="message-input"
   >
-    <template #right-icon>
-      <van-icon name="chat" :loading="loading" :disabled="loading" :onclick="send" />
+    <template #button>
+      <van-button :loading="loading" :disabled="loading" :onclick="send" size="small" type="primary">发送</van-button>
     </template>
   </van-field>
 </template>
