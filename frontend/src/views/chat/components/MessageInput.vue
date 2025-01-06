@@ -19,7 +19,9 @@ import { ref } from 'vue';
 
 const emit = defineEmits(['send']);
 const text = ref('');
-const loading = ref(false);
+defineProps({
+  loading: Boolean // 接收父组件传递的 loading prop
+});
 
 const handerEnter = () => {
 
@@ -27,10 +29,7 @@ const handerEnter = () => {
 
 const send = () => {
   if (!text.value.trim()) return;
-  loading.value = true;  // 设置按钮为loading状态，禁用按钮
-  emit('send', text.value, () => {  // 向父组件传递发送完成后的回调
-    loading.value = false;  // 请求完成后恢复按钮状态
-  });
+  emit('send', text.value);
   text.value = '';
 };
 </script>
@@ -39,10 +38,6 @@ const send = () => {
 .message-input {
   padding: 10px;
   background-color: #F7F7F7;
-  input {
-    background-color: #EDEDED;
-    padding: 10px;
-  }
 }
 
 .van-icon {

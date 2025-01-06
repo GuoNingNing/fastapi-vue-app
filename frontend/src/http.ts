@@ -117,9 +117,9 @@ export function del<T>(url: string, data?: Record<string, unknown>): Promise<T> 
   return request<T>({ url, method: 'DELETE', data });
 }
 
-export function stream(url: string,
+export function stream(method: string = 'GET',
+                       url: string,
                        callback: (data: string) => void,
-                       method: string = 'GET',
                        data?: Record<string, unknown>) {
   return fetch(`${baseUrl}${url}`, {
     method: method,

@@ -1,12 +1,9 @@
 import { defineStore } from 'pinia';
-import { reactive } from 'vue';
 import type { Message } from './chatTypes.ts';
-import { stream } from '@/http';
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
-    messages: [] as Message[],
-    loading: false
+    messages: [] as Message[]
   }),
   actions: {
     // 初始化时自动加载聊天记录
@@ -17,25 +14,7 @@ export const useChatStore = defineStore('chat', {
       }
     },
     async addMessage(message: Message) {
-      this.messages.push({ ...message, timestamp: Date.now() });
-    },
-    async fetchGPTReply(userInput: string) {
-      this.loading = true;
-      const replay = reactive({
-        role: 'gpt',
-        content: '',
-        timestamp: 0
-      });
-      this.messages.push(replay);
-      await stream('/gpt/ask', (data) => {
-          replay.content += data;
-        },
-        'POST',
-        { content: userInput, stream: true }
-      );
-      replay.timestamp = Date.now();
-      this.loading = false;
-      this.saveMessages();
+      this.messages.push(message);
     },
     saveMessages() {
       localStorage.setItem('messages', JSON.stringify(this.messages)); // 保存聊天记录到 localStorage
