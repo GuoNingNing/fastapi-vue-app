@@ -5,6 +5,7 @@ export interface Message {
   audio?: string,
   function_call?: string,
   tool_calls?: string
+  timestamp?: number,
 }
 
 export interface User {

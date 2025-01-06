@@ -2,9 +2,11 @@ import type {AxiosInstance, AxiosRequestConfig, AxiosResponse, Method} from 'axi
 import axios from 'axios';
 import router from './router'; // 导入 router 实例
 
+const baseUrl = import.meta.env.VUE_APP_BASE_URL;
+
 // 创建一个 axios 实例
 const http: AxiosInstance = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api',  // 设置你的 API 基础 URL
+  baseURL: baseUrl,  // 设置你的 API 基础 URL
   timeout: 100000,  // 设置请求超时时间
 });
 

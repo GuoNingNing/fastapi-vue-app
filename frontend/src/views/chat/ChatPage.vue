@@ -26,38 +26,37 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useChatStore } from './chatStore';
-import ChatBubble from './components/ChatBubble.vue';
-import Loading from './components/Loading.vue';
-import MessageInput from './components/MessageInput.vue';
-import Toolbar from './components/Toolbar.vue';
+import { useChatStore } from './chatStore'
+import ChatBubble from './components/ChatBubble.vue'
+import Loading from './components/Loading.vue'
+import MessageInput from './components/MessageInput.vue'
+import Toolbar from './components/Toolbar.vue'
 
-const chatStore = useChatStore();
-const messages = chatStore.messages;
-console.log('messages',JSON.stringify(messages));
-const loading = chatStore.loading;
+const chatStore = useChatStore()
+const messages = chatStore.messages
+console.log('messages', JSON.stringify(messages))
+const loading = chatStore.loading
 
 const goToHistory = () => {
-  console.log('跳转到历史记录');
-};
+  console.log('跳转到历史记录')
+}
 
 const goToSettings = () => {
-  console.log('跳转到设置页面');
-};
+  console.log('跳转到设置页面')
+}
 
 const sendMessage = async (text) => {
-  await chatStore.addMessage({ role: 'user', content: text });
-  await chatStore.fetchGPTReply(text);
-};
+  await chatStore.addMessage({ role: 'user', content: text })
+  await chatStore.fetchGPTReply(text)
+}
 
 const toggleTheme = () => {
-  console.log('切换主题');
-};
+  console.log('切换主题')
+}
 
 const openFeedback = () => {
-  console.log('打开反馈窗口');
-};
+  console.log('打开反馈窗口')
+}
 </script>
 
 <style scoped>
