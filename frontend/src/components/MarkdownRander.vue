@@ -27,11 +27,11 @@ renderer.code = ({text, lang}) => {
   return `
   <div>
     <div class="code-toolbar" >
-      <el-tag type="primary">${language}</el-tag>
-      <button onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.querySelector('code').innerText); this.textContent='已复制';" class="copy-button" style="">复制</button>
+      <span class="van-tag van-tag--mark van-tag--primary">${language}<!----></span>
+      <span class="van-tag van-tag--plain van-tag--primary" onclick="navigator.clipboard.writeText(this.closest('div').nextElementSibling.querySelector('code').innerText); this.textContent='已复制';" >复制</span>
     </div>
     <div>
-        <pre><code class="weiruan hljs ${language}">${highlighted}</code></pre>
+        <pre><code class="hljs ${language}">${highlighted}</code></pre>
     </div>
   </div>
   `;

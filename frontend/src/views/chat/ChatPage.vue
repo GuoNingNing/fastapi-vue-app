@@ -20,7 +20,7 @@
     </div>
 
     <!-- 底部输入框和工具栏 -->
-    <MessageInput @send="sendMessage" />
+    <MessageInput @loading="loading" @send="sendMessage" />
     <Toolbar @themeChange="toggleTheme" @feedback="openFeedback" />
   </div>
 </template>
@@ -34,12 +34,11 @@ import MessageInput from './components/MessageInput.vue'
 import Toolbar from './components/Toolbar.vue'
 
 
-// 获取 Vue Router 的实例
 const router = useRouter()
 
 const chatStore = useChatStore()
+chatStore.loadMessages()
 const messages = chatStore.messages
-console.log('messages', JSON.stringify(messages))
 const loading = chatStore.loading
 
 const goToHistory = () => {
@@ -51,9 +50,9 @@ const goToSettings = () => {
   router.push('/chat/settings')
 }
 
-const sendMessage = async (text: string) => {
+const sendMessage = async (text: string, callback: () => void) => {
   await chatStore.addMessage({ role: 'user', content: text })
-  await chatStore.fetchGPTReply(text)
+  chatStore.fetchGPTReply(text).finally(() => callback())
 }
 
 const toggleTheme = () => {

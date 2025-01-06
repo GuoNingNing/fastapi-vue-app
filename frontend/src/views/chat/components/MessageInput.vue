@@ -2,13 +2,15 @@
   <van-field
     v-model="text"
     type="textarea"
-    rows="3"
+    rows="1"
     autosize
-    right-icon="arrow-up"
-    @click-right-icon="send"
-    @keypress.enter="send"
+    @keydown.enter.prevent="handerEnter"
     class="message-input"
-  />
+  >
+    <template #button>
+      <van-button :loading="loading" :disabled="loading" :onclick="send" size="small" type="primary">发送</van-button>
+    </template>
+  </van-field>
 </template>
 
 <script setup lang="ts">
@@ -16,10 +18,19 @@ import { ref } from 'vue'
 
 const emit = defineEmits(['send'])
 const text = ref('')
+const loading = ref(false)
+
+const handerEnter = () => {
+
+}
 
 const send = () => {
   if (!text.value.trim()) return
-  emit('send', text.value)
+  loading.value = true  // 设置按钮为loading状态，禁用按钮
+  emit('send', text.value, () => {  // 向父组件传递发送完成后的回调
+    console.log('Sending...')
+    loading.value = false  // 请求完成后恢复按钮状态
+  })
   text.value = ''
 }
 </script>

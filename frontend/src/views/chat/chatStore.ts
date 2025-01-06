@@ -8,6 +8,13 @@ export const useChatStore = defineStore('chat', {
     loading: false
   }),
   actions: {
+    // 初始化时自动加载聊天记录
+    async loadMessages() {
+      const savedMessages = localStorage.getItem('messages')
+      if (savedMessages) {
+        this.messages = JSON.parse(savedMessages)
+      }
+    },
     async addMessage(message: Message) {
       this.messages.push({ ...message, timestamp: Date.now() })
     },
