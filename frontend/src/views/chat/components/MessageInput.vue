@@ -40,6 +40,6 @@ const send = () => {
   padding: 10px;
   background-color: #f9f9f9; /* 修改为浅灰色背景，提升视觉对比 */
   border-radius: 8px; /* 给输入框增加圆角 */
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1); /* 为输入框增加轻微阴影，提升视觉效果 */
+  box-shadow: 0 2px 6px rgb(71, 77, 83); /* 为输入框增加轻微阴影，提升视觉效果 */
 }
 </style>
