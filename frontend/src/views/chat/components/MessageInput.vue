@@ -6,6 +6,7 @@
     autosize
     @keydown.enter.prevent="handerEnter"
     class="message-input"
+    placeholder="请输入"
   >
     <template #button>
       <van-button :loading="loading" :disabled="loading" :onclick="send" size="small" type="primary">发送</van-button>
@@ -37,8 +38,11 @@ const send = () => {
 <style scoped>
 .message-input {
   padding: 10px;
-  background-color: #f9f9f9; /* 修改为浅灰色背景，提升视觉对比 */
-  //border-radius: 8px; /* 给输入框增加圆角 */
+  background-color: #F7F7F7;
+  input {
+    background-color: #EDEDED;
+    padding: 10px;
+  }
 }
 
 .van-icon {
