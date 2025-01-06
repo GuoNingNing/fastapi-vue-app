@@ -1,3 +1,4 @@
+import json
 import logging
 import os.path
 from typing import List, Dict
@@ -48,9 +49,6 @@ def clean(auth_user: User = Depends(deps.get_auth_user)):
 
 @router.get("/ask", dependencies=[Depends(get_db)])
 async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_auth_user)):
-    if content.startswith("@youtube"):
-        youtube.download_youtube_video(content.split("@youtube")[1], cookies_path)
-
     # 获取用户历史消息，如果不存在则初始化为空列表
     if auth_user.id not in user_message_history:
         user_message_history[auth_user.id] = []
@@ -58,9 +56,20 @@ async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_aut
     # 当前用户的历史消息
     messages = user_message_history[auth_user.id]
 
+
+
+    if content.startswith("@youtube"):
+        v_info = youtube.get_best_video_info(content.split("@youtube")[1], cookies_path)
+        content += f"""下面是从这个URL中获取的信息：
+        ```json
+        {json.dumps(v_info, indent=2)}
+        ```
+        """
+        # messages.append(ChatCompletionAssistantMessageParam(role='assistant', content=_c))
+
     # 添加当前用户的新消息
     messages.append(ChatCompletionUserMessageParam(role='user', content=content))
-
+    logging.info(f"Asking user {auth_user.id}: {content}")
     # 调用模型，发送历史消息
     response = __client.chat.completions.create(
         messages=[sys_prompt] + messages,
@@ -82,18 +91,24 @@ async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_aut
         # 返回流式响应
         return StreamingResponse(event_stream(), media_type="text/event-stream")
     else:
+        logging.info(response.choices[0].message)
         return response.choices[0].message.content or ''
 
 
 @router.post("/set_sys_prompt", dependencies=[Depends(get_db)])
 async def set_sys_prompt(name: str = Body(..., embed=True),
-                         prompt: str = Body(..., embed=True),
+                         content: str = Body(..., embed=True),
                          auth_user: User = Depends(deps.get_auth_user)):
     sys_prompt = ChatCompletionSystemMessageParam(role='system',
                                                   name=name,
-                                                  content=prompt)
+                                                  content=content)
     logging.info(auth_user.id, sys_prompt)
     return Response()
+
+
+@router.get("/get_sys_prompt", dependencies=[Depends(get_db)])
+def get_sys_prompt(auth_user: User = Depends(deps.get_auth_user)):
+    return sys_prompt
 
 
 @router.post("/set_cookies", dependencies=[Depends(get_db)])
