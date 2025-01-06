@@ -2,8 +2,9 @@ import type {AxiosInstance, AxiosRequestConfig, AxiosResponse, Method} from 'axi
 import axios from 'axios';
 import router from './router'; // 导入 router 实例
 
-const baseUrl = import.meta.env.VUE_APP_BASE_URL;
+const baseUrl = import.meta.env.VITE_APP_BASE_URL;
 
+console.log('baseUrl', baseUrl);
 // 创建一个 axios 实例
 const http: AxiosInstance = axios.create({
   baseURL: baseUrl,  // 设置你的 API 基础 URL

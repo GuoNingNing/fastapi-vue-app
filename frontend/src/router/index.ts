@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import About from '@/views/AboutView.vue';
-import GPT from '@/views/chat/ChatPage.vue';
+import Chat from '@/views/chat/ChatPage.vue';
 import Login from '@/views/LoginPage.vue';
 
 
@@ -9,9 +9,15 @@ const router = createRouter({
   routes: [
     { path: '/', name: 'home', component: () => import('@/views/HomePage.vue') },
     {
-      path: '/gpt',
-      name: 'GPT',
-      component: GPT,
+      path: '/chat',
+      name: 'Chat',
+      component: Chat,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/chat/settings',
+      name: 'Settings',
+      component: () => import('@/views/chat/SettingsPage.vue'),
       meta: { requiresAuth: true }
     },
     {
@@ -29,10 +35,8 @@ const router = createRouter({
   ]
 });
 
-// 假设你有一个方法来检查用户是否登录
 function isLoggedIn() {
-  // 这里可以根据你的具体实现来检查登录状态
-  return !!localStorage.getItem('access_token'); // 示例：查看 localStorage 中是否有用户信息
+  return !!localStorage.getItem('access_token');
 }
 
 router.beforeEach((to, from, next) => {

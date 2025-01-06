@@ -46,53 +46,52 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { post } from '@/http.ts';
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { post } from '@/http.ts'
 
-const router = useRouter();
-const username = ref('');
-const password = ref('');
+const router = useRouter()
+const username = ref('')
+const password = ref('')
 
 // 返回上一页
 const goBack = () => {
-  router.back();
-};
+  router.back()
+}
 
 // 登录事件
 const login = () => {
   if (!username.value || !password.value) {
-    return alert('请输入用户名和密码');
+    return alert('请输入用户名和密码')
   }
-  console.log('用户名:', username.value);
-  console.log('密码:', password.value);
+  console.log('用户名:', username.value)
+  console.log('密码:', password.value)
   // 在这里处理实际的登录逻辑，例如调用接口
   post('/auth/token', {
     username: username.value,
     password: password.value
   }).then(response => {
-    localStorage.setItem('access_token', response.access_token);
-    console.log('登录成功: response.access_token', response);
-    console.log('登录成功:', localStorage.getItem('access_token'));
-
+    localStorage.setItem('access_token', response.access_token)
+    console.log('登录成功: response.access_token', response)
+    console.log('登录成功:', localStorage.getItem('access_token'))
+    router.push('/') // 登录成功后跳转首页
   }).catch(error => {
-    console.error('登录失败:', error);
-  });
-  router.push('/'); // 登录成功后跳转首页
-};
+    console.error('登录失败:', error)
+  })
+}
 
 // 注册事件
 const register = () => {
-  console.log('跳转到注册页面');
-  router.push('/register'); // 跳转到注册页面
-};
+  console.log('跳转到注册页面')
+  router.push('/register') // 跳转到注册页面
+}
 
 // 忘记密码事件
 const forgotPassword = () => {
-  console.log('跳转到忘记密码页面');
-  router.push('/forgot-password'); // 跳转到忘记密码页面
-};
+  console.log('跳转到忘记密码页面')
+  router.push('/forgot-password') // 跳转到忘记密码页面
+}
 </script>
 
 <style scoped>

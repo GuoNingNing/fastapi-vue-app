@@ -81,7 +81,6 @@ const messages = ref<Message[]>([]);
 const tmp_content = ref<string>('');
 const access_token = localStorage.getItem('access_token');
 
-const formLabelWidth = '140px'
 const systemFormVisible = ref(false)
 const cookiesFormVisible = ref(false)
 

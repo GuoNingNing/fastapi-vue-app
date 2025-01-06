@@ -8,11 +8,11 @@
       首页
     </van-tabbar-item>
     <van-tabbar-item
-      to="/gpt"
+      to="/chat"
       icon="search"
       @click="navigate(1)"
     >
-      GPT
+      聊天
     </van-tabbar-item>
     <van-tabbar-item
       to="/friends"

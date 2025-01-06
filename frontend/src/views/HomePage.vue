@@ -11,7 +11,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import HeaderBar from '@/components/HeaderBar.vue';
 import BannerCarousel from '@/components/BannerCarousel.vue';
 import MenuGrid from '@/components/MenuGrid.vue';

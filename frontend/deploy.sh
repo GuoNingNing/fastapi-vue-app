@@ -46,7 +46,7 @@ fi
 
 # 清理 Nginx 部署目录
 echo -e "${GREEN}清理 Nginx 部署目录...${NC}"
-sudo rm -rf "$DEPLOY_DIR"/*
+rm -rf "$DEPLOY_DIR"/*
 if [ $? -ne 0 ]; then
   echo -e "${RED}清理部署目录失败！${NC}"
   exit 1
@@ -54,7 +54,7 @@ fi
 
 # 拷贝打包文件到 Nginx 部署目录
 echo -e "${GREEN}拷贝打包文件到 Nginx 部署目录...${NC}"
-sudo cp -r "$BUILD_DIR"/* "$DEPLOY_DIR"
+cp -r "$BUILD_DIR"/* "$DEPLOY_DIR"
 if [ $? -ne 0 ]; then
   echo -e "${RED}文件拷贝失败！${NC}"
   exit 1
@@ -62,7 +62,7 @@ fi
 
 # 重启 Nginx 服务
 echo -e "${GREEN}重启 Nginx 服务...${NC}"
-sudo systemctl reload nginx
+systemctl reload nginx
 if [ $? -ne 0 ]; then
   echo -e "${RED}Nginx 重启失败！${NC}"
   exit 1

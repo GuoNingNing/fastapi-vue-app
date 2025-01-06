@@ -25,12 +25,17 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
 import { useChatStore } from './chatStore'
 import ChatBubble from './components/ChatBubble.vue'
 import Loading from './components/Loading.vue'
 import MessageInput from './components/MessageInput.vue'
 import Toolbar from './components/Toolbar.vue'
+
+
+// 获取 Vue Router 的实例
+const router = useRouter()
 
 const chatStore = useChatStore()
 const messages = chatStore.messages
@@ -43,6 +48,7 @@ const goToHistory = () => {
 
 const goToSettings = () => {
   console.log('跳转到设置页面')
+  router.push('/chat/settings')
 }
 
 const sendMessage = async (text) => {
