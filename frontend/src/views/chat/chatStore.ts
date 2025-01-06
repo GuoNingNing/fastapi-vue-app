@@ -29,7 +29,6 @@ export const useChatStore = defineStore('chat', {
       this.messages.push(replay);
       await stream('/gpt/ask', (data) => {
           replay.content += data;
-          console.log(replay.content);
         },
         'POST',
         { content: userInput, stream: true }

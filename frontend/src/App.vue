@@ -1,17 +1,13 @@
 <template>
   <div id="app">
-    <router-view />
+    <HomePage />
   </div>
 </template>
 
 <script lang="ts">
+import HomePage from '@/views/HomePage.vue';
 export default {
-  name: 'App'
+  name: 'App',
+  components: { HomePage }
 }
-import { onMounted } from 'vue'
-
-onMounted(() => {
-  // 页面加载后滚动 1px，防止 iOS/Android 浏览器地址栏显示
-  window.scrollTo(0, 100)
-})
 </script>

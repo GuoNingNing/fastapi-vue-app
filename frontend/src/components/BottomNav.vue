@@ -5,18 +5,18 @@
       icon="home-o"
       @click="navigate(0)"
     >
-      首页
-    </van-tabbar-item>
-    <van-tabbar-item
-      to="/chat"
-      icon="search"
-      @click="navigate(1)"
-    >
       聊天
     </van-tabbar-item>
     <van-tabbar-item
+      to="/home"
+      icon="search"
+      @click="navigate(1)"
+    >
+      首页
+    </van-tabbar-item>
+    <van-tabbar-item
       to="/about"
-      icon="about-o"
+      icon="friends-o"
       @click="navigate(2)"
     >
       好友
@@ -38,7 +38,7 @@ import { useRoute } from 'vue-router';
 const active = ref(0);
 const route = useRoute();
 
-const navigate = (index) => {
+const navigate = (index: number) => {
   active.value = index;
 };
 </script>

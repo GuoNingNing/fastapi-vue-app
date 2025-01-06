@@ -7,13 +7,8 @@ import Login from '@/views/LoginPage.vue';
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    { path: '/', name: 'home', component: () => import('@/views/HomePage.vue') },
-    {
-      path: '/chat',
-      name: 'Chat',
-      component: Chat,
-      meta: { requiresAuth: true }
-    },
+    { path: '/', name: 'Chat', component: Chat, meta: { requiresAuth: true } },
+    { path: '/home', name: 'home', component: () => import('@/views/HomePage.vue') },
     {
       path: '/chat/settings',
       name: 'Settings',

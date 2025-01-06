@@ -57,7 +57,6 @@ const goToSettings = () => {
 
 const sendMessage = async (text: string, callback: () => void) => {
   await chatStore.addMessage({ role: 'user', content: text });
-  //TODO
   chatStore.fetchGPTReply(text).finally(() => callback());
 };
 
@@ -74,7 +73,8 @@ const openFeedback = () => {
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
+  margin-bottom: 50px;
   background-color: #EDEDED;
 }
 
