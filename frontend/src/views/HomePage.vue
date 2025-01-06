@@ -1,14 +1,16 @@
 <template>
   <div class="home-page">
     <!-- 顶部导航 -->
-<!--    <HeaderBar />-->
-<!--    &lt;!&ndash; 轮播图 &ndash;&gt;-->
-<!--    <BannerCarousel />-->
-<!--    &lt;!&ndash; 功能菜单 &ndash;&gt;-->
-<!--    <MenuGrid />-->
-    <router-view />
+    <!--    <HeaderBar />-->
+    <!--    &lt;!&ndash; 轮播图 &ndash;&gt;-->
+    <!--    <BannerCarousel />-->
+    <!--    &lt;!&ndash; 功能菜单 &ndash;&gt;-->
+    <!--    <MenuGrid />-->
+    <div class="container">
+      <router-view />
+    </div>
     <!-- 底部导航 -->
-    <BottomNav />
+    <BottomNav class="bottom-nav" />
   </div>
 </template>
 
@@ -24,5 +26,12 @@ import BottomNav from '@/components/BottomNav.vue';
   display: flex;
   flex-direction: column;
   height: 100vh;
+
+  .container {
+    height: calc(100% - 50px);
+  }
+  .bottom-nav {
+    height: 50px;
+  }
 }
 </style>
