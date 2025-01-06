@@ -1,6 +1,7 @@
-import { defineStore } from 'pinia'
-import { fetchGPTResponse } from './api'
-import type { Message } from '@/types/chat.ts'
+import { defineStore } from 'pinia';
+import { reactive } from 'vue';
+import type { Message } from './chatTypes.ts';
+import { stream } from '@/http';
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -10,36 +11,39 @@ export const useChatStore = defineStore('chat', {
   actions: {
     // 初始化时自动加载聊天记录
     async loadMessages() {
-      const savedMessages = localStorage.getItem('messages')
+      const savedMessages = localStorage.getItem('messages');
       if (savedMessages) {
-        this.messages = JSON.parse(savedMessages)
+        this.messages = JSON.parse(savedMessages);
       }
     },
     async addMessage(message: Message) {
-      this.messages.push({ ...message, timestamp: Date.now() })
+      this.messages.push({ ...message, timestamp: Date.now() });
     },
     async fetchGPTReply(userInput: string) {
-      this.loading = true
-      try {
-        const reply = await fetchGPTResponse(userInput)
-        this.messages.push({
-          role: 'gpt',
-          content: reply,
-          timestamp: Date.now()
-        })
-        this.saveMessages()
-      } catch (error) {
-        console.error('GPT回复失败', error)
-      } finally {
-        this.loading = false
-      }
+      this.loading = true;
+      const replay = reactive({
+        role: 'gpt',
+        content: '',
+        timestamp: 0
+      });
+      this.messages.push(replay);
+      await stream('/gpt/ask', (data) => {
+          replay.content += data;
+          console.log(replay.content);
+        },
+        'POST',
+        { content: userInput, stream: true }
+      );
+      replay.timestamp = Date.now();
+      this.loading = false;
+      this.saveMessages();
     },
     saveMessages() {
-      localStorage.setItem('messages', JSON.stringify(this.messages)) // 保存聊天记录到 localStorage
+      localStorage.setItem('messages', JSON.stringify(this.messages)); // 保存聊天记录到 localStorage
     },
     clearMessages() {
-      this.messages = []
-      localStorage.removeItem('messages') // 清空聊天记录并从 localStorage 移除
+      this.messages = [];
+      localStorage.removeItem('messages'); // 清空聊天记录并从 localStorage 移除
     }
   }
-})
+});

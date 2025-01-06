@@ -1,4 +1,4 @@
-import type {AxiosInstance, AxiosRequestConfig, AxiosResponse, Method} from 'axios'; // 导入 Axios 类型
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, Method } from 'axios'; // 导入 Axios 类型
 import axios from 'axios';
 import router from './router'; // 导入 router 实例
 
@@ -8,7 +8,7 @@ console.log('baseUrl', baseUrl);
 // 创建一个 axios 实例
 const http: AxiosInstance = axios.create({
   baseURL: baseUrl,  // 设置你的 API 基础 URL
-  timeout: 100000,  // 设置请求超时时间
+  timeout: 100000  // 设置请求超时时间
 });
 
 // 请求拦截器
@@ -18,7 +18,7 @@ http.interceptors.request.use(
     if (access_token) {
       config.headers['Authorization'] = `Bearer ${access_token}`;
     } else {
-      router.push({name: 'Login'});
+      router.push({ name: 'Login' });
     }
     return config;
   },
@@ -42,7 +42,7 @@ http.interceptors.response.use(
   (error) => {
     // 错误处理：比如服务器错误、超时等
     if (error.response) {
-      const {code, message, error: errorMessage} = error.response.data;
+      const { code, message, error: errorMessage } = error.response.data;
       switch (code) {
         case 400:
           alert('请求错误: ' + message);
@@ -81,13 +81,13 @@ interface RequestParams {
 }
 
 // 通用请求函数
-export async function request<T>({url, data, method = 'GET', params}: RequestParams): Promise<T> {
+export async function request<T>({ url, data, method = 'GET', params }: RequestParams): Promise<T> {
   try {
     const config: AxiosRequestConfig = {
       url,
       method,
       data,
-      params,
+      params
     };
 
     return http(config);  // 返回数据部分
@@ -99,22 +99,53 @@ export async function request<T>({url, data, method = 'GET', params}: RequestPar
 
 // GET 请求
 export function get<T>(url: string, params?: Record<string, unknown>): Promise<T> {
-  return request<T>({url, method: 'GET', params});
+  return request<T>({ url, method: 'GET', params });
 }
 
 // POST 请求
 export function post<T>(url: string, data?: Record<string, unknown>): Promise<T> {
-  return request<T>({url, method: 'POST', data});
+  return request<T>({ url, method: 'POST', data });
 }
 
 // PUT 请求
 export function put<T>(url: string, data?: Record<string, unknown>): Promise<T> {
-  return request<T>({url, method: 'PUT', data});
+  return request<T>({ url, method: 'PUT', data });
 }
 
 // DELETE 请求
 export function del<T>(url: string, data?: Record<string, unknown>): Promise<T> {
-  return request<T>({url, method: 'DELETE', data});
+  return request<T>({ url, method: 'DELETE', data });
+}
+
+export function stream(url: string,
+                       callback: (data: string) => void,
+                       method: string = 'GET',
+                       data?: Record<string, unknown>) {
+  return fetch(`${baseUrl}${url}`, {
+    method: method,
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream',
+      'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+    },
+    body: JSON.stringify(data)
+  }).then(async response => {
+    if (response === null || response.body == null || !response.ok) {
+      const errorBody = response?.json();
+      throw new Error(`generateImage HTTP error! status: ${response?.status} ${response?.statusText}. Details: ${JSON.stringify(errorBody)}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      callback(decoder.decode(value, { stream: true }));
+    }
+  });
+
+
 }
 
 export default http;

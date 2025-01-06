@@ -20,53 +20,54 @@
     </div>
 
     <!-- 底部输入框和工具栏 -->
-    <MessageInput @loading="loading" @send="sendMessage" />
+    <MessageInput @send="sendMessage" />
     <Toolbar @themeChange="toggleTheme" @feedback="openFeedback" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useChatStore } from './chatStore'
-import ChatBubble from './components/ChatBubble.vue'
-import Loading from './components/Loading.vue'
-import MessageInput from './components/MessageInput.vue'
-import Toolbar from './components/Toolbar.vue'
-import { showToast } from 'vant'
-import { get } from '@/http'
+import { useRouter } from 'vue-router';
+import { useChatStore } from './chatStore';
+import ChatBubble from './components/ChatBubble.vue';
+import Loading from './components/Loading.vue';
+import MessageInput from './components/MessageInput.vue';
+import Toolbar from './components/Toolbar.vue';
+import { showToast } from 'vant';
+import { get } from '@/http';
 
 
-const router = useRouter()
+const router = useRouter();
 
-const chatStore = useChatStore()
-chatStore.loadMessages()
-const messages = chatStore.messages
-const loading = chatStore.loading
+const chatStore = useChatStore();
+chatStore.loadMessages();
+const messages = chatStore.messages;
+const loading = chatStore.loading;
 
 const goToHistory = () => {
   get('/gpt/clean').finally(() => {
-    chatStore.clearMessages()
-    showToast('历史数据已清除')
-  })
-}
+    chatStore.clearMessages();
+    showToast('历史数据已清除');
+  });
+};
 
 const goToSettings = () => {
-  console.log('跳转到设置页面')
-  router.push('/chat/settings')
-}
+  console.log('跳转到设置页面');
+  router.push('/chat/settings');
+};
 
 const sendMessage = async (text: string, callback: () => void) => {
-  await chatStore.addMessage({ role: 'user', content: text })
-  chatStore.fetchGPTReply(text).finally(() => callback())
-}
+  await chatStore.addMessage({ role: 'user', content: text });
+  //TODO
+  chatStore.fetchGPTReply(text).finally(() => callback());
+};
 
 const toggleTheme = () => {
-  console.log('切换主题')
-}
+  console.log('切换主题');
+};
 
 const openFeedback = () => {
-  console.log('打开反馈窗口')
-}
+  console.log('打开反馈窗口');
+};
 </script>
 
 <style scoped>
@@ -74,12 +75,12 @@ const openFeedback = () => {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  background-color: #EDEDED;
 }
 
 .chat-content {
   flex: 1;
   overflow-y: auto;
   padding: 10px;
-  background-color: var(--van-background);
 }
 </style>

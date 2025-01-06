@@ -15,8 +15,8 @@
       聊天
     </van-tabbar-item>
     <van-tabbar-item
-      to="/friends"
-      icon="friends-o"
+      to="/about"
+      icon="about-o"
       @click="navigate(2)"
     >
       好友

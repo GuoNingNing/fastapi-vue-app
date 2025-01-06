@@ -1,45 +1,39 @@
 <template>
-  <main>
-    <div class="about">
-      <MarkdownRander id="aaa" :content="userInfo"></MarkdownRander>
-    </div>
-  </main>
+  <div>
+    <van-list
+      v-model="loading"
+      :finished="finished"
+      @load="loadData"
+    >
+      <van-cell
+        v-for="(item, index) in messages"
+        :key="index"
+        :title="`Event ${index + 1}`"
+        :label="item"
+      />
+    </van-list>
+  </div>
 </template>
 
-<script setup lang="ts">
-import {onMounted, ref} from 'vue';
-import {get} from '@/http'; // 导入你封装的 http 请求函数
-import MarkdownRander from "@/components/MarkdownRander.vue";
+<script setup>
+import { ref } from 'vue';
+import { List, Cell } from 'vant';
+import { stream } from '@/http';
 
-// 使用 ref 创建响应式的 fetchData
-const userInfo = ref<string>(``);
+// 存储消息
+const messages = ref([]);
+const loading = ref(false);
+const finished = ref(false);
 
-// 获取用户数据的异步函数
-const fetchUserData = async () => {
-  get<object>('/users/me').then(user => {
-    userInfo.value += `
+// 通过 Axios 获取事件流
+const loadData = async () => {
+  if (loading.value) return;
 
-\`\`\`json
-${JSON.stringify(user, null, 2)}
-\`\`\`
-    `;
+  loading.value = true;
 
-    console.log(userInfo.value)
-  }).catch(err => {
-    console.error('Error fetching user data:', err);
-  })
+  stream('/gpt/events', (data) => {
+    messages.value.push(data);
+  });
 
 };
-
-// 在组件加载时获取数据
-onMounted(() => {
-  fetchUserData();
-});
 </script>
-
-<style scoped>
-/* 可以根据需要添加样式 */
-.about {
-  padding: 20px;
-}
-</style>

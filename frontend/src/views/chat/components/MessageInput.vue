@@ -28,7 +28,6 @@ const send = () => {
   if (!text.value.trim()) return
   loading.value = true  // 设置按钮为loading状态，禁用按钮
   emit('send', text.value, () => {  // 向父组件传递发送完成后的回调
-    console.log('Sending...')
     loading.value = false  // 请求完成后恢复按钮状态
   })
   text.value = ''

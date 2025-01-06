@@ -1,11 +1,13 @@
 import json
 import logging
 import os.path
+import time
 from typing import List, Dict
 
 from fastapi import APIRouter, Depends, Body
 from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionMessageParam, \
     ChatCompletionAssistantMessageParam, ChatCompletionSystemMessageParam
+from pydantic import BaseModel
 from starlette.responses import StreamingResponse, Response
 
 from app.http import deps
@@ -35,6 +37,11 @@ sys_prompt = ChatCompletionSystemMessageParam(role='system',
                                               content='You are a very helpful robot.')
 
 
+class ChatRequest(BaseModel):
+    content: str
+    stream: bool = False
+
+
 @router.get("/history", dependencies=[Depends(get_db)])
 def history(auth_user: User = Depends(deps.get_auth_user)):
     if auth_user.id not in user_message_history:
@@ -47,8 +54,8 @@ def clean(auth_user: User = Depends(deps.get_auth_user)):
     user_message_history[auth_user.id] = []
 
 
-@router.get("/ask", dependencies=[Depends(get_db)])
-async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_auth_user)):
+@router.post("/ask", dependencies=[Depends(get_db)])
+async def ask(chat: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
     # 获取用户历史消息，如果不存在则初始化为空列表
     if auth_user.id not in user_message_history:
         user_message_history[auth_user.id] = []
@@ -56,11 +63,9 @@ async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_aut
     # 当前用户的历史消息
     messages = user_message_history[auth_user.id]
 
-
-
-    if content.startswith("@youtube"):
-        v_info = youtube.get_best_video_info(content.split("@youtube")[1], cookies_path)
-        content += f"""下面是从这个URL中获取的信息：
+    if chat.content.startswith("@youtube"):
+        v_info = youtube.get_best_video_info(chat.content.split("@youtube")[1], cookies_path)
+        chat.content += f"""下面是从这个URL中获取的信息：
         ```json
         {json.dumps(v_info, indent=2)}
         ```
@@ -68,13 +73,13 @@ async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_aut
         # messages.append(ChatCompletionAssistantMessageParam(role='assistant', content=_c))
 
     # 添加当前用户的新消息
-    messages.append(ChatCompletionUserMessageParam(role='user', content=content))
-    logging.info(f"Asking user {auth_user.id}: {content}")
+    messages.append(ChatCompletionUserMessageParam(role='user', content=chat.content))
+    logging.info(f"Asking user {auth_user.id}: {chat.content}")
     # 调用模型，发送历史消息
     response = __client.chat.completions.create(
         messages=[sys_prompt] + messages,
         model="gpt-4o-mini",
-        stream=stream
+        stream=chat.stream
     )
 
     async def event_stream():
@@ -82,12 +87,12 @@ async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_aut
         for chunk in response:
             if len(chunk.choices) > 0 and chunk.choices[0].delta.content is not None:
                 _content += chunk.choices[0].delta.content
-                yield chunk.choices[0].delta.content
+                yield chunk.choices[0].delta.content or ""
 
         messages.append(ChatCompletionAssistantMessageParam(role='assistant', content=_content))
         logging.info(messages)
 
-    if stream:
+    if chat.stream:
         # 返回流式响应
         return StreamingResponse(event_stream(), media_type="text/event-stream")
     else:
@@ -114,3 +119,15 @@ def get_sys_prompt(auth_user: User = Depends(deps.get_auth_user)):
 @router.post("/set_cookies", dependencies=[Depends(get_db)])
 async def set_cookies(cookies: str = Body(..., embed=True), auth_user: User = Depends(deps.get_auth_user)):
     files.write_file(cookies_path, cookies)
+
+
+# 事件流生成器
+def event_stream():
+    while True:
+        time.sleep(1)
+        yield f"data: {time.time()}\n\n"
+
+
+@router.get("/events")
+async def get_events():
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
