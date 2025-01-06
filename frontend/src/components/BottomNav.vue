@@ -8,23 +8,9 @@
       聊天
     </van-tabbar-item>
     <van-tabbar-item
-      to="/home"
-      icon="search"
-      @click="navigate(1)"
-    >
-      首页
-    </van-tabbar-item>
-    <van-tabbar-item
-      to="/about"
-      icon="friends-o"
-      @click="navigate(2)"
-    >
-      好友
-    </van-tabbar-item>
-    <van-tabbar-item
-      to="/settings"
+      to="/chat/settings"
       icon="setting-o"
-      @click="navigate(3)"
+      @click="navigate(1)"
     >
       设置
     </van-tabbar-item>

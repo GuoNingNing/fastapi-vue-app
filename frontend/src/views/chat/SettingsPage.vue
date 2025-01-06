@@ -1,6 +1,11 @@
 <template>
   <div class="settings-page">
-    <van-nav-bar title="设置 Cookies" left-text="返回" @click-left="goBack" />
+    <van-nav-bar title="设置" left-text="返回" @click-left="goBack" />
+    <div style="margin: 16px">
+      <van-button round block type="primary" native-type="submit" @click="cleanHistory">
+        清除历史数据
+      </van-button>
+    </div>
     <div class="settings-content">
       <van-field
         v-model="prompt.cookies"
@@ -10,8 +15,8 @@
         rows="5"
         required
       />
-      <div class="submit-btn">
-        <van-button type="primary" @click="submit" :loading="loading">保存设置</van-button>
+      <div style="margin: 16px" class="submit-btn">
+        <van-button round block type="primary" native-type="submit" @click="submit" :loading="loading">保存设置</van-button>
       </div>
     </div>
   </div>
@@ -20,8 +25,9 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showNotify } from 'vant' // 导入 showNotify 组件
-import { post } from '@/http'
+import { showNotify, showToast } from 'vant'; // 导入 showNotify 组件
+import { get, post } from '@/http';
+import { useChatStore } from '@/views/chat/chatStore.ts';
 
 // 定义组件内部的响应式数据
 const prompt = reactive({
@@ -54,6 +60,15 @@ const submit = async () => {
 const goBack = () => {
   router.go(-1) // 返回上一步
 }
+
+const chatStore = useChatStore();
+
+const cleanHistory = () => {
+  get('/gpt/clean').finally(() => {
+    chatStore.clearMessages();
+    showToast('历史数据已清除');
+  });
+};
 
 onMounted(async () => {
 

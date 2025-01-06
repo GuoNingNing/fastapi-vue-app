@@ -98,6 +98,7 @@ const forgotPassword = () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
+  text-align: center;
   background-color: #f5f5f5;
 }
 

@@ -30,6 +30,7 @@ import BottomNav from '@/components/BottomNav.vue';
   .container {
     height: calc(100% - 50px);
   }
+
   .bottom-nav {
     height: 50px;
   }

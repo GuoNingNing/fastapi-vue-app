@@ -1,14 +1,5 @@
 <template>
   <div class="chat-page">
-    <!-- 顶部导航栏 -->
-<!--    <van-nav-bar-->
-<!--      title="ChatGPT"-->
-<!--      left-text="清除"-->
-<!--      right-text="设置"-->
-<!--      @click-left="goToHistory"-->
-<!--      @click-right="goToSettings"-->
-<!--    />-->
-
     <!-- 聊天区域 -->
     <div class="chat-content" ref="chatContent">
       <ChatBubble
@@ -16,12 +7,11 @@
         :key="index"
         :message="message"
       />
-      <Loading v-if="loading" />
+      <Loading :visible="loading" text="加载中，请稍后..." />
     </div>
 
     <!-- 底部输入框和工具栏 -->
     <MessageInput @send="sendMessage" />
-    <Toolbar @themeChange="toggleTheme" @feedback="openFeedback" />
   </div>
 </template>
 
@@ -31,7 +21,6 @@ import { useChatStore } from './chatStore';
 import ChatBubble from './components/ChatBubble.vue';
 import Loading from './components/Loading.vue';
 import MessageInput from './components/MessageInput.vue';
-import Toolbar from './components/Toolbar.vue';
 import { showToast } from 'vant';
 import { get } from '@/http';
 
@@ -43,12 +32,6 @@ chatStore.loadMessages();
 const messages = chatStore.messages;
 const loading = chatStore.loading;
 
-const goToHistory = () => {
-  get('/gpt/clean').finally(() => {
-    chatStore.clearMessages();
-    showToast('历史数据已清除');
-  });
-};
 
 const goToSettings = () => {
   console.log('跳转到设置页面');
@@ -74,7 +57,6 @@ const openFeedback = () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  margin-bottom: 50px;
   background-color: #EDEDED;
 }
 
