@@ -3,7 +3,7 @@
     <!-- 顶部导航栏 -->
     <van-nav-bar
       title="ChatGPT"
-      left-text="历史记录"
+      left-text="清除"
       right-text="设置"
       @click-left="goToHistory"
       @click-right="goToSettings"
@@ -32,6 +32,8 @@ import ChatBubble from './components/ChatBubble.vue'
 import Loading from './components/Loading.vue'
 import MessageInput from './components/MessageInput.vue'
 import Toolbar from './components/Toolbar.vue'
+import { showToast } from 'vant'
+import { get } from '@/http'
 
 
 const router = useRouter()
@@ -42,7 +44,10 @@ const messages = chatStore.messages
 const loading = chatStore.loading
 
 const goToHistory = () => {
-  console.log('跳转到历史记录')
+  get('/gpt/clean').finally(() => {
+    chatStore.clearMessages()
+    showToast('历史数据已清除')
+  })
 }
 
 const goToSettings = () => {
