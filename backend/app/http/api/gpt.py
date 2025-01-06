@@ -1,16 +1,16 @@
 import logging
 import os.path
-
-from config.config import settings as app_settings
 from typing import List, Dict
+
 from fastapi import APIRouter, Depends, Body
-from openai.types.chat import ChatCompletionMessage, ChatCompletionUserMessageParam, ChatCompletionMessageParam, \
+from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionMessageParam, \
     ChatCompletionAssistantMessageParam, ChatCompletionSystemMessageParam
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, Response
 
 from app.http import deps
 from app.http.deps import get_db
 from app.models.user import User
+from config.config import settings as app_settings
 from config.database import openai_settings
 from utils import files, youtube
 
@@ -86,11 +86,14 @@ async def ask(content: str, stream=False, auth_user: User = Depends(deps.get_aut
 
 
 @router.post("/set_sys_prompt", dependencies=[Depends(get_db)])
-async def set_sys_prompt(prompt: str = Body(..., embed=True), auth_user: User = Depends(deps.get_auth_user)):
+async def set_sys_prompt(name: str = Body(..., embed=True),
+                         prompt: str = Body(..., embed=True),
+                         auth_user: User = Depends(deps.get_auth_user)):
     sys_prompt = ChatCompletionSystemMessageParam(role='system',
-                                                  name='Tamer',
+                                                  name=name,
                                                   content=prompt)
     logging.info(auth_user.id, sys_prompt)
+    return Response()
 
 
 @router.post("/set_cookies", dependencies=[Depends(get_db)])

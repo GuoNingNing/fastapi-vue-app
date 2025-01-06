@@ -1,0 +1,4 @@
+.idea
+fastapi.db
+backend/.env
+frontend/node_modules

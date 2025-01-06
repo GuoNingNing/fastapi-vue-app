@@ -24,51 +24,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
-import { Notify } from 'vant';  // 导入 Notify 组件
-import {post} from '@/http';
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { showNotify } from 'vant' // 导入 showNotify 组件
+import { post } from '@/http'
 
 // 定义组件内部的响应式数据
-const name = ref('');
-const prompt = ref('');
-const loading = ref(false);
+const name = ref('')
+const prompt = ref('')
+const loading = ref(false)
 
 // 使用 Vue Router 来实现返回功能
-const router = useRouter();
+const router = useRouter()
 
 // 后端接口请求函数
 const submit = async () => {
   if (!name.value || !prompt.value) {
-    Notify({ type: 'danger', message: '名称和提示内容不能为空' });
-    return;
+    showNotify({ type: 'danger', message: '名称和提示内容不能为空' })
+    return
   }
+  loading.value = true
 
-  loading.value = true;
-
-  try {
-    const response = await post('/gpt/set_sys_prompt', {
-      name: name.value,
-      prompt: prompt.value,
-    });
-
-    if (response.status === 200) {
-      Notify({ type: 'success', message: '设置成功' });
-    } else {
-      Notify({ type: 'danger', message: '设置失败，请重试' });
-    }
-  } catch (error) {
-    console.error('设置失败', error);
-    Notify({ type: 'danger', message: '请求失败，请稍后再试' });
-  } finally {
-    loading.value = false;
-  }
-};
+  post('/gpt/set_sys_prompt', {
+    name: name.value,
+    prompt: prompt.value
+  }).then(() => {
+    showNotify({ type: 'success', message: '设置成功' })
+  }).catch(() => {
+    showNotify({ type: 'danger', message: '请求失败，请稍后再试' })
+  }).finally(() => {
+    loading.value = false
+  })
+}
 
 // 返回上一步操作
 const goBack = () => {
-  router.go(-1); // 返回上一步
-};
+  router.go(-1) // 返回上一步
+}
 </script>
 
 <style scoped>

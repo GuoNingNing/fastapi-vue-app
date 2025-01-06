@@ -1,5 +1,5 @@
 from pydantic import BaseSettings
-
+import os
 
 class Settings(BaseSettings):
     """mysql db"""
@@ -33,6 +33,7 @@ class OpenaiSettings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
 
 db_settings = Settings()
 redis_settings = RedisSettings()
