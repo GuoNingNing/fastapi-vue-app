@@ -81,6 +81,6 @@ const openFeedback = () => {
 .chat-content {
   flex: 1;
   overflow-y: auto;
-  padding: 10px;
+  padding: 5px;
 }
 </style>

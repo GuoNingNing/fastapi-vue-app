@@ -28,9 +28,9 @@ const timestamp = computed(() =>
 <style scoped>
 .chat-bubble {
   max-width: 100%;
-  margin: 10px;
-  padding: 5px 10px;
-  border-radius: 10px;
+  margin: 10px 5px;
+  padding: 5px;
+  border-radius: 5px;
 }
 
 .timestamp {
