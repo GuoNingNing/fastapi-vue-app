@@ -51,7 +51,7 @@ const goToSettings = () => {
   router.push('/chat/settings')
 }
 
-const sendMessage = async (text) => {
+const sendMessage = async (text: string) => {
   await chatStore.addMessage({ role: 'user', content: text })
   await chatStore.fetchGPTReply(text)
 }
