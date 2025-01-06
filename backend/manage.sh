@@ -6,8 +6,8 @@
 APP_NAME="main.py"              # Python 后端入口文件
 APP_DIR="$(dirname "$0")"       # 自动获取脚本所在目录作为 APP_DIR
 ENV_NAME="py312"                # Conda 环境名称
-LOG_FILE="/var/log/app.log"     # 日志文件路径
-PID_FILE="/var/run/app.pid"     # PID 文件路径
+LOG_FILE="/var/log/api.log"     # 日志文件路径
+PID_FILE="/var/run/api.pid"     # PID 文件路径
 
 # 颜色输出
 GREEN='\033[0;32m'
@@ -69,6 +69,10 @@ status_app() {
     fi
 }
 
+logs_app() {
+    tail -f "$LOG_FILE"
+}
+
 case "$1" in
     start)
         start_app
@@ -82,8 +86,11 @@ case "$1" in
     status)
         status_app
         ;;
+    logs)
+      logs_app
+      ;;
     *)
-        echo -e "${RED}用法: $0 {start|stop|restart|status}${NC}"
+        echo -e "${RED}用法: $0 {start|stop|restart|status|logs}${NC}"
         exit 1
         ;;
 esac
