@@ -6,7 +6,7 @@
   />
 </template>
 
-<script setup>
+<script setup lang="ts">
 const onClickLeft = () => {
   console.log('返回按钮被点击');
 };

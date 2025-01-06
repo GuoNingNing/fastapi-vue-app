@@ -4,7 +4,7 @@
   </van-grid>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const menuItems = [
   { text: '功能 1', icon: 'home-o' },
   { text: '功能 2', icon: 'search' },
