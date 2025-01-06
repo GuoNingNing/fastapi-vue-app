@@ -1,13 +1,13 @@
 <template>
   <div class="chat-page">
     <!-- 顶部导航栏 -->
-    <van-nav-bar
-      title="ChatGPT"
-      left-text="清除"
-      right-text="设置"
-      @click-left="goToHistory"
-      @click-right="goToSettings"
-    />
+<!--    <van-nav-bar-->
+<!--      title="ChatGPT"-->
+<!--      left-text="清除"-->
+<!--      right-text="设置"-->
+<!--      @click-left="goToHistory"-->
+<!--      @click-right="goToSettings"-->
+<!--    />-->
 
     <!-- 聊天区域 -->
     <div class="chat-content" ref="chatContent">
