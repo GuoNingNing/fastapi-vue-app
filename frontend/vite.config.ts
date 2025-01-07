@@ -10,11 +10,15 @@ export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
-    vueDevTools(),
+    vueDevTools()
   ],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
-    },
+    }
   },
+  server: {
+    host: '0.0.0.0', // 允许从任何地址访问
+    port: 5173 // 确保与npm run dev中的端口一致（可根据你的设置进行调整）
+  }
 })
