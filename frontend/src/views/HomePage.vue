@@ -1,7 +1,7 @@
 <template>
   <div class="home-page">
     <!-- 顶部导航 -->
-    <HeaderBar />
+<!--    <HeaderBar />-->
     <!--    &lt;!&ndash; 轮播图 &ndash;&gt;-->
     <!--    <BannerCarousel />-->
     <!--    &lt;!&ndash; 功能菜单 &ndash;&gt;-->

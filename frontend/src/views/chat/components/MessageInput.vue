@@ -1,40 +1,47 @@
 <template>
-  <van-field
-    v-model="text"
-    type="textarea"
-    rows="1"
-    autosize
-    @keydown.enter.prevent="handerEnter"
-    class="message-input"
-    placeholder="请输入"
-  >
-    <template #button>
-      <van-button :loading="loading" :disabled="loading" :onclick="send" size="small" type="primary">发送</van-button>
-    </template>
-  </van-field>
+  <div class="message-input-wrapper">
+    <van-field
+      v-model="text"
+      type="textarea"
+      rows="1"
+      autosize
+      @keydown.enter.prevent="handerEnter"
+      class="message-input"
+      placeholder="请输入"
+    >
+      <template #button>
+        <van-button :loading="loading" :disabled="loading" :onclick="send" size="small" type="primary">发送</van-button>
+      </template>
+    </van-field>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref } from 'vue'
 
-const emit = defineEmits(['send']);
-const text = ref('');
+const emit = defineEmits(['send'])
+const text = ref('')
 defineProps({
   loading: Boolean // 接收父组件传递的 loading prop
-});
+})
 
 const handerEnter = () => {
 
-};
+}
 
 const send = () => {
-  if (!text.value.trim()) return;
-  emit('send', text.value);
-  text.value = '';
-};
+  if (!text.value.trim()) return
+  emit('send', text.value)
+  text.value = ''
+}
 </script>
 
 <style scoped>
+.message-input-wrapper{
+  display: flex;
+  background-color: #e5eecf;
+  padding: 12px;
+}
 .message-input {
   padding: 10px;
   background-color: #F7F7F7;

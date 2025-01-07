@@ -1,72 +1,75 @@
 <template>
   <div class="chat-page">
+    <van-nav-bar title="ChatGpt" left-arrow @click-left="showDrawer = true">
+      <template #left>
+        <van-icon name="more-o" size="18" />
+      </template>
+    </van-nav-bar>
     <!-- 聊天区域 -->
     <div class="chat-content" ref="chatContent">
-      <ChatBubble
-        v-for="(message, index) in messages"
-        :key="index"
-        :message="message"
-      />
+      <ChatBubble v-for="(message, index) in messages" :key="index" :message="message" />
     </div>
-
     <!-- 底部输入框和工具栏 -->
     <MessageInput :loading="loading" @send="sendMessage" />
+    <!-- 使用封装的 SideMenu 组件 -->
+    <SideMenu v-model:show="showDrawer">
+      <p>这是侧边栏的内容</p>
+    </SideMenu>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router';
-import { useChatStore } from './chatStore';
-import ChatBubble from './components/ChatBubble.vue';
-import Loading from './components/Loading.vue';
-import MessageInput from './components/MessageInput.vue';
-import { showToast } from 'vant';
-import { get, stream } from '@/http';
-import { ref, nextTick, reactive } from 'vue';
+import { useRouter } from 'vue-router'
+import { useChatStore } from './chatStore'
+import ChatBubble from './components/ChatBubble.vue'
+import MessageInput from './components/MessageInput.vue'
+import { stream } from '@/http'
+import { reactive, ref } from 'vue'
+import SideMenu from '@/views/chat/components/SideMenu.vue'
 
 
-const router = useRouter();
+const router = useRouter()
 
-const chatStore = useChatStore();
-chatStore.loadMessages();
-const messages = chatStore.messages;
-const loading = ref(false);
-const chatContent = ref(null);
+const chatStore = useChatStore()
+chatStore.loadMessages()
+const messages = chatStore.messages
+const loading = ref(false)
 
-const goToSettings = () => {
-  console.log('跳转到设置页面');
-  router.push('/chat/settings');
-};
+const chatContent = ref(null)
 
 const sendMessage = async (text: string) => {
-  loading.value = true;
-  await chatStore.addMessage({ role: 'user', content: text });
+  loading.value = true
+  await chatStore.addMessage({ role: 'user', content: text })
   const replay = reactive({
     role: 'gpt',
     content: '',
     timestamp: 0
-  });
-  await chatStore.addMessage(replay);
+  })
+  await chatStore.addMessage(replay)
 
   stream('POST', '/gpt/ask', (data) => {
-      replay.content += data;
-      chatContent.value.scrollTop = chatContent.value.scrollHeight;
+      replay.content += data
+      chatContent.value.scrollTop = chatContent.value.scrollHeight
     },
     { content: text, stream: true }
   ).finally(() => {
-    replay.timestamp = Date.now();
-    chatStore.saveMessages();
-    chatContent.value.scrollTop = chatContent.value.scrollHeight;
-    loading.value = false;
-  });
-};
+    replay.timestamp = Date.now()
+    chatStore.saveMessages()
+    chatContent.value.scrollTop = chatContent.value.scrollHeight
+    loading.value = false
+  })
+}
+
+
+const showDrawer = ref(false)
+
 </script>
 
 <style scoped>
 .chat-page {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: 100vh;
   background-color: #EDEDED;
 }
 
