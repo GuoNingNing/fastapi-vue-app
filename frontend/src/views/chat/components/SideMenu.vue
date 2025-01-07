@@ -3,6 +3,7 @@
   <div v-if="showMenu" class="side-menu-overlay" @click="closeMenu">
     <div class="side-menu" @click.stop>
       <van-search v-model="value" placeholder="请输入搜索关键词" />
+      <van-divider />
       <!-- 这里可以嵌套其他内容或组件 -->
       <slot></slot>  <!-- 使用插槽插入内容 -->
     </div>
@@ -61,9 +62,9 @@ const value = ''
   padding: 10px;
   background-color: #fff;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
+  border-radius: 0 10px 10px 0;
   transform: translateX(-100%); /* 初始位置在屏幕外 */
-  transition: transform 1s ease-in-out;
+  transition: transform 1.5s ease-in-out;
   z-index: 1001;
 }
 

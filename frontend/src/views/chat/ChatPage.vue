@@ -13,7 +13,7 @@
     <MessageInput :loading="loading" @send="sendMessage" />
     <!-- 使用封装的 SideMenu 组件 -->
     <SideMenu v-model:show="showDrawer">
-      <p>这是侧边栏的内容</p>
+      <span @click="chatStore.clearMessages()">清除历史</span>
     </SideMenu>
   </div>
 </template>

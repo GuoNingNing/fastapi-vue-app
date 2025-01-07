@@ -39,12 +39,12 @@ const send = () => {
 <style scoped>
 .message-input-wrapper{
   display: flex;
-  background-color: #e5eecf;
+  background-color: #F7F7F7;
   padding: 12px;
 }
 .message-input {
   padding: 10px;
-  background-color: #F7F7F7;
+  background-color: #EDEDED;
 }
 
 .van-icon {

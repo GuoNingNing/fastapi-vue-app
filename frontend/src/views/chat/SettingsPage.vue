@@ -16,7 +16,8 @@
         required
       />
       <div style="margin: 16px" class="submit-btn">
-        <van-button round block type="primary" native-type="submit" @click="submit" :loading="loading">保存设置</van-button>
+        <van-button round block type="primary" native-type="submit" @click="submit" :loading="loading">保存设置
+        </van-button>
       </div>
     </div>
   </div>
@@ -25,9 +26,9 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showNotify, showToast } from 'vant'; // 导入 showNotify 组件
-import { get, post } from '@/http';
-import { useChatStore } from '@/views/chat/chatStore.ts';
+import { showNotify } from 'vant' // 导入 showNotify 组件
+import { post } from '@/http'
+import { useChatStore } from '@/views/chat/chatStore.ts'
 
 // 定义组件内部的响应式数据
 const prompt = reactive({
@@ -61,14 +62,9 @@ const goBack = () => {
   router.go(-1) // 返回上一步
 }
 
-const chatStore = useChatStore();
+const chatStore = useChatStore()
 
-const cleanHistory = () => {
-  get('/gpt/clean').finally(() => {
-    chatStore.clearMessages();
-    showToast('历史数据已清除');
-  });
-};
+const cleanHistory = chatStore.clearMessages()
 
 onMounted(async () => {
 
