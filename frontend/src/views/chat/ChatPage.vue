@@ -13,9 +13,10 @@
     <MessageInput :loading="loading" @send="sendMessage" />
     <!-- 使用封装的 SideMenu 组件 -->
     <SideMenu v-model:show="showDrawer">
-      <van-list disabled style="text-align: center;">
-        <van-cell @click="chatStore.clearMessages()" title="清除历史" />
-      </van-list>
+      <van-cell-group title="会话管理" inset border>
+        <van-cell center clickable border @click="chatStore.clearMessages()" title="新建会话" />
+        <van-cell center clickable border @click="chatStore.clearMessages()" title="清除历史" />
+      </van-cell-group>
     </SideMenu>
   </div>
 </template>

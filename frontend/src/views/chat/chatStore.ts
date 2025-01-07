@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import type { Message } from './chatTypes.ts'
 import { get, stream } from '@/http.ts'
 import { reactive } from 'vue'
+import { showToast } from 'vant'
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -38,10 +39,12 @@ export const useChatStore = defineStore('chat', {
       this.messages.push(message)
     },
     async clearMessages() {
-      await get('/gpt/clean')
       localStorage.removeItem('messages')
       this.messages = []
-      console.log('Clear messages...')
+      showToast('已清除');
+      get('/gpt/clean').then(() => {
+        console.log('Clear messages...')
+      })
     },
     saveMessages() {
       localStorage.setItem('messages', JSON.stringify(this.messages))
