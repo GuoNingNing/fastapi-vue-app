@@ -32,7 +32,7 @@ const emit = defineEmits<{
 // 关闭侧边栏
 const closeMenu = () => {
   showMenu.value = false
-  emit('update:show', false)  // 通过 update:modelValue 向父组件发送更新信号
+  emit('update:show', false)
 }
 
 

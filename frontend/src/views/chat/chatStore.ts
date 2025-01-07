@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import type { Message } from './chatTypes.ts'
-import { get } from '@/http.ts'
-import { showToast } from 'vant'
+import { get, stream } from '@/http.ts'
+import { reactive } from 'vue'
 
 export const useChatStore = defineStore('chat', {
   state: () => ({
@@ -15,18 +15,36 @@ export const useChatStore = defineStore('chat', {
         this.messages = JSON.parse(savedMessages)
       }
     },
+    async sendMessage(text: string) {
+      await this.addMessage({ role: 'user', content: text })
+      const replay = reactive({
+        role: 'gpt',
+        content: '',
+        timestamp: 0
+      })
+      await this.addMessage(replay)
+
+      await stream('POST', '/gpt/ask', (data) => {
+          replay.content += data
+        },
+        { content: text, stream: true }
+      ).finally(() => {
+        replay.timestamp = Date.now()
+        this.saveMessages()
+      })
+      return replay
+    },
     async addMessage(message: Message) {
       this.messages.push(message)
     },
-    saveMessages() {
-      localStorage.setItem('messages', JSON.stringify(this.messages)) // 保存聊天记录到 localStorage
+    async clearMessages() {
+      await get('/gpt/clean')
+      localStorage.removeItem('messages')
+      this.messages = []
+      console.log('Clear messages...')
     },
-    clearMessages() {
-      get('/gpt/clean').finally(() => {
-        this.messages = []
-        localStorage.removeItem('messages') // 清空聊天记录并从 localStorage 移除
-        showToast('历史数据已清除')
-      })
+    saveMessages() {
+      localStorage.setItem('messages', JSON.stringify(this.messages))
     }
   }
 })

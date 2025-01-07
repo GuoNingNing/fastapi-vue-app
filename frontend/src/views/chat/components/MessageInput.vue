@@ -5,7 +5,7 @@
       type="textarea"
       rows="1"
       autosize
-      @keydown.enter.prevent="handerEnter"
+      @keydown.enter.prevent="handleEnter"
       class="message-input"
       placeholder="请输入"
     >
@@ -22,10 +22,10 @@ import { ref } from 'vue'
 const emit = defineEmits(['send'])
 const text = ref('')
 defineProps({
-  loading: Boolean // 接收父组件传递的 loading prop
+  loading: Boolean
 })
 
-const handerEnter = () => {
+const handleEnter = () => {
 
 }
 
@@ -37,11 +37,12 @@ const send = () => {
 </script>
 
 <style scoped>
-.message-input-wrapper{
+.message-input-wrapper {
   display: flex;
   background-color: #F7F7F7;
   padding: 12px;
 }
+
 .message-input {
   padding: 10px;
   background-color: #EDEDED;

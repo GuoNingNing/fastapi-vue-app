@@ -21,7 +21,7 @@ const props = defineProps({
 
 const role = computed(() => (props.message.role === 'user' ? 'user' : 'gpt'));
 const timestamp = computed(() =>
-  props.message.timestamp === 0 ? '正在輸出' : new Date(props.message.timestamp || Date.now()).toLocaleTimeString()
+  props.message.timestamp === 0 ? '胡编乱造中...' : new Date(props.message.timestamp || Date.now()).toLocaleTimeString()
 );
 </script>
 
