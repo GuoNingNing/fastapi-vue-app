@@ -63,12 +63,12 @@ const sessions = ref<Chat[]>([])
 const messages = ref<Message[]>([])
 
 const sendMessage = async (text: string) => {
-  messages.value.push({ role: 'user', content: text, timestamp: Date.now() })
+  messages.value.push({ role: 'user', content: text, timestamp: new Date(Date.now()).toLocaleString() })
 
   const replay = reactive({
     role: 'gpt',
     content: '',
-    timestamp: 0,
+    timestamp: '',
   })
 
   messages.value.push(replay)
@@ -81,7 +81,7 @@ const sendMessage = async (text: string) => {
       replay.content += data
     },
   ).finally(() => {
-    replay.timestamp = Date.now()
+    replay.timestamp = new Date(Date.now()).toLocaleString()
     localStorage.setItem(session_id.value, JSON.stringify(messages.value))
   })
 }

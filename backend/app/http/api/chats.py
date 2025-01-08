@@ -63,7 +63,6 @@ def del_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
         chat.delete_instance()
 
 
-
 @router.get("/get_session", dependencies=[Depends(get_db)])
 def get_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
     chat = Chat.get_or_none(user_id=auth_user.id, session_id=session_id)
@@ -91,7 +90,7 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
     messages = json.loads(chat.message)
 
     messages.append(
-        {'role': 'user', 'content': chatR.content, 'timestamp': int(datetime.now().timestamp()) + 1000 * 60 * 60 * 8})
+        {'role': 'user', 'content': chatR.content, 'timestamp': datetime.now().strftime("%m/%d/%Y %I:%M:%S")})
     # 添加当前用户的新消息
     logging.info(f"Asking user {auth_user.id}: {json.dumps(messages)}")
     # 调用模型，发送历史消息
@@ -109,7 +108,8 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
                 yield chunk.choices[0].delta.content or ""
 
         messages.append({'role': 'assistant', 'content': _content,
-                         'timestamp': int(datetime.now().timestamp()) + 1000 * 60 * 60 * 8})
+                         'timestamp': datetime.now().strftime("%Y/%m/%d/ %I:%M:%S")
+                         })
 
     def __save_data(data):
         chat.message = json.dumps(data)

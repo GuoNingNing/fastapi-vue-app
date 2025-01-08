@@ -15,14 +15,14 @@ import MarkdownRander from '@/components/MarkdownRander.vue'
 const props = defineProps({
   message: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
 
 const role = computed(() => (props.message.role === 'user' ? 'user' : 'gpt'))
 const timestamp = computed(() =>
-  props.message.timestamp === 0 ?
-    '胡编乱造中...' : new Date(props.message.timestamp || Date.now()).toLocaleTimeString())
+  props.message.timestamp ? props.message.timestamp : '胡编乱造中...',
+)
 </script>
 
 <style scoped>
@@ -35,12 +35,12 @@ const timestamp = computed(() =>
 
 .timestamp {
   font-size: 70%;
-  color: #4C4C4C;
+  color: #4c4c4c;
 }
 
 .user {
   max-width: 70%;
-  background-color: #07C160;
+  background-color: #07c160;
   margin-left: auto;
   text-align: right;
 }
