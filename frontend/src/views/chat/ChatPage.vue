@@ -6,8 +6,8 @@
       </template>
     </van-nav-bar>
     <!-- 聊天区域 -->
-    <div class="chat-content" ref="chatContent" v-scroll>
-      <ChatBubble v-for="(msg, index) in message" :key="index" :message="msg" />
+    <div class="chat-content" v-scroll>
+      <ChatBubble v-for="(m, i) in messages" :key="i" :message="m" />
     </div>
     <!-- 底部输入框和工具栏 -->
     <MessageInput :loading="loading" @send="sendMessage" />
@@ -19,26 +19,25 @@
             <van-search placeholder="搜索" />
           </van-col>
           <van-col span="4">
-            <van-icon size="24" @click="chatStore.newSession();showDrawer = false" name="chat-o" />
+            <van-icon size="24" @click="newSession" name="chat-o" />
           </van-col>
         </van-row>
       </template>
       <template #default>
         <van-cell-group title="聊天" inset border>
           <van-cell
-            v-for="c in chats"
-            :title="c?.title"
-            :key="c?.session_id"
+            v-for="s in sessions"
+            :title="s?.title"
+            :key="s?.session_id"
             center
-            clickable
             border
-            @click="chatStore.checkSession(c.session_id)"
+            @click="checkSession(s.session_id)"
+            :class="session_id === s.session_id ? 'active' : ''"
           >
             <!-- 使用 right-icon 插槽来自定义右侧图标 -->
             <template #right-icon>
-              <van-icon name="delete" class="delete-icon" @click="chatStore.delSession(c.session_id)" />
+              <van-icon name="delete" class="delete-icon" @click="delSession(s.session_id)" />
             </template>
-
           </van-cell>
         </van-cell-group>
       </template>
@@ -48,32 +47,82 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useChatStore } from './chatStore'
+import { onMounted, reactive, ref } from 'vue'
 import ChatBubble from './components/ChatBubble.vue'
 import MessageInput from './components/MessageInput.vue'
 import SideMenu from '@/views/chat/components/SideMenu.vue'
-import { list_session } from '@/views/chat/api.ts'
-import type { Chat } from '@/views/chat/chatTypes.ts'
+import { del_session, get_session, list_session, new_session } from '@/views/chat/api.ts'
+import type { Chat, Message } from '@/views/chat/chatTypes.ts'
+import { stream } from '@/http.ts'
 
 const loading = ref(false)
 const showDrawer = ref(false)
-const chatStore = useChatStore()
-const chatContent = ref(null)
 
-const message = computed(() => chatStore.message)
+const session_id = ref('')
+const sessions = ref<Chat[]>([])
+const messages = ref<Message[]>([])
 
 const sendMessage = async (text: string) => {
-  loading.value = true
-  await chatStore.sendMessage(text)
-  loading.value = false
+  messages.value.push({ role: 'user', content: text, timestamp: Date.now() })
+
+  const replay = reactive({
+    role: 'gpt',
+    content: '',
+    timestamp: 0,
+  })
+
+  messages.value.push(replay)
+
+  stream(
+    'POST',
+    '/chats/ask',
+    { session_id: session_id.value, content: text, stream: true },
+    (data: string) => {
+      replay.content += data
+    },
+  ).finally(() => {
+    replay.timestamp = Date.now()
+    localStorage.setItem(session_id.value, JSON.stringify(messages.value))
+  })
 }
 
-const chats = computed(() => chatStore.chats)
+const checkSession = async (sid: string) => {
+  localStorage.setItem('session_id', sid)
+  session_id.value = sid
+  get_session(sid, (c: Chat) => {
+    messages.value = JSON.parse(c?.message || '[]')
+  })
+}
+
+const newSession = async () => {
+  new_session((chat) => {
+    session_id.value = chat.session_id
+    sessions.value.unshift(chat)
+    checkSession(chat.session_id)
+  })
+}
+
+const delSession = async (sid: string) => {
+  del_session(sid, () => {
+    const indexToDelete = sessions.value.findIndex((s) => s.session_id === sid)
+    // 检查索引是否有效
+    if (indexToDelete !== -1) {
+      // 使用 splice 方法删除该元素
+      sessions.value.splice(indexToDelete, 1)
+    }
+
+    session_id.value = sessions.value[0].session_id
+    checkSession(session_id.value)
+  })
+}
 
 onMounted(() => {
-  list_session((data) => {
-    chatStore.init(data)
+  list_session((chats) => {
+    sessions.value = chats
+
+    session_id.value = localStorage.getItem('session_id') || chats[0].session_id
+
+    checkSession(session_id.value)
   })
 })
 </script>
@@ -90,5 +139,9 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 5px;
+}
+
+.active {
+  background-color: #07C160;
 }
 </style>

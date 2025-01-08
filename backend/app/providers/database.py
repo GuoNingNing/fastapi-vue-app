@@ -38,7 +38,7 @@ async def reset_db_state():
 #     port=settings.DB_PORT
 # )
 
-db = SqliteDatabase(db_settings.DB_DATABASE)
+db = SqliteDatabase(db_settings.DB_DATABASE, check_same_thread=False)
 
 db._state = PeeweeConnectionState()
 

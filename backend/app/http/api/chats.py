@@ -59,21 +59,25 @@ def new_session(auth_user: User = Depends(deps.get_auth_user)):
 def del_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
     chat = Chat.get(user_id=auth_user.id, session_id=session_id)
     if chat:
+        logging.info(f"Deleting session: {chat}")
         chat.delete_instance()
 
-    return chat.__data__
 
 
 @router.get("/get_session", dependencies=[Depends(get_db)])
 def get_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
     chat = Chat.get_or_none(user_id=auth_user.id, session_id=session_id)
-    return chat.__data__
+    if chat:
+        return chat.__data__
+    else:
+        return None
 
 
 @router.get("/list_session", dependencies=[Depends(get_db)])
 def list_session(auth_user: User = Depends(deps.get_auth_user)):
     # 使用列表推导式获取所有 session_id
-    chats = [c.__data__ for c in Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc())]
+    chats = [{"title": c.title, "session_id": c.session_id} for c in
+             Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc())]
 
     return chats
 
@@ -86,7 +90,8 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
 
     messages = json.loads(chat.message)
 
-    messages.append({'role': 'user', 'content': chatR.content, 'timestamp': int(datetime.now().timestamp())})
+    messages.append(
+        {'role': 'user', 'content': chatR.content, 'timestamp': int(datetime.now().timestamp()) + 1000 * 60 * 60 * 8})
     # 添加当前用户的新消息
     logging.info(f"Asking user {auth_user.id}: {json.dumps(messages)}")
     # 调用模型，发送历史消息
@@ -103,7 +108,8 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
                 _content += chunk.choices[0].delta.content
                 yield chunk.choices[0].delta.content or ""
 
-        messages.append({'role': 'assistant', 'content': _content, 'timestamp': int(datetime.now().timestamp())})
+        messages.append({'role': 'assistant', 'content': _content,
+                         'timestamp': int(datetime.now().timestamp()) + 1000 * 60 * 60 * 8})
 
     def __save_data(data):
         chat.message = json.dumps(data)
