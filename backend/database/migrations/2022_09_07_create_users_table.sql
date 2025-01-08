@@ -18,3 +18,15 @@ CREATE TABLE users
 -- 插入用户，密码均为 123456
 INSERT INTO users (username, password, created_at, updated_at)
 VALUES ('tamer', '$2b$12$6JaM5cYFoPdgdW0nrkRAuOz6teVS6JPRYSM1nnyZP0z/ej2tJeh4G', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- 创建chats表 chats
+CREATE TABLE chats
+(
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    title      TEXT     NOT NULL,
+    user_id    TEXT     NOT NULL,
+    session_id TEXT     NOT NULL,
+    message    TEXT     NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

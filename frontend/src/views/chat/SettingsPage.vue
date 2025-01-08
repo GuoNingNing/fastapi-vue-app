@@ -48,7 +48,7 @@ const submit = async () => {
   }
   loading.value = true
 
-  post('/gpt/set_cookies', prompt).then(() => {
+  post('/chats/set_cookies', prompt).then(() => {
     showNotify({ type: 'success', message: '设置成功' })
   }).catch(() => {
     showNotify({ type: 'danger', message: '请求失败，请稍后再试' })

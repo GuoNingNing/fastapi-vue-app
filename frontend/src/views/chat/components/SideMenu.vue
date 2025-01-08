@@ -2,10 +2,14 @@
   <!-- 侧边弹出层 -->
   <div v-if="showMenu" class="side-menu-overlay" @click="closeMenu">
     <div class="side-menu" @click.stop>
-      <van-search v-model="value" placeholder="请输入搜索关键词" />
+      <slot name="header"></slot>
       <van-divider />
       <!-- 这里可以嵌套其他内容或组件 -->
-      <slot></slot>  <!-- 使用插槽插入内容 -->
+      <slot name="default"></slot>  <!-- 使用插槽插入内容 -->
+      <van-tabbar>
+        <slot name="footer"></slot>
+      </van-tabbar>
+
     </div>
   </div>
 </template>

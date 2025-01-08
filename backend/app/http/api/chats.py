@@ -2,6 +2,7 @@ import json
 import logging
 import os.path
 import time
+import uuid
 from typing import List, Dict
 
 from fastapi import APIRouter, Depends, Body
@@ -12,13 +13,14 @@ from starlette.responses import StreamingResponse, Response
 
 from app.http import deps
 from app.http.deps import get_db
+from app.models.chat import Chat
 from app.models.user import User
 from config.config import settings as app_settings
 from config.database import openai_settings
 from utils import files, youtube
 
 router = APIRouter(
-    prefix="/gpt"
+    prefix="/chats"
 )
 
 from openai import OpenAI
@@ -40,6 +42,31 @@ sys_prompt = ChatCompletionSystemMessageParam(role='system',
 class ChatRequest(BaseModel):
     content: str
     stream: bool = False
+
+
+@router.get("/new_sessions", dependencies=[Depends(get_db)])
+def new_sessions(auth_user: User = Depends(deps.get_auth_user)):
+    session_id = uuid.uuid4().hex
+    Chat.insert(user_id=auth_user.id, session_id=session_id, message='[]').execute()
+
+    return {"title": "新会话", "session_id": session_id}
+
+
+@router.get("/del_sessions", dependencies=[Depends(get_db)])
+def del_sessions(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
+    chat = Chat.get(user_id=auth_user.id, session_id=session_id)
+    if chat:
+        chat.delete_instance()
+
+    return {"session_id": session_id}
+
+
+@router.get("/sessions", dependencies=[Depends(get_db)])
+def sessions(auth_user: User = Depends(deps.get_auth_user)):
+    # 使用列表推导式获取所有 session_id
+    s_id = [chat.session_id for chat in Chat.select(Chat.session_id).filter(user_id=auth_user.id)]
+
+    return {"sessions": s_id}
 
 
 @router.get("/history", dependencies=[Depends(get_db)])

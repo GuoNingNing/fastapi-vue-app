@@ -25,8 +25,15 @@ defineProps({
   loading: Boolean
 })
 
-const handleEnter = () => {
-
+const handleEnter = (event: KeyboardEvent) => {
+  if (event.key === 'Enter') {
+    if (event.shiftKey) {
+      text.value += '\n'
+    } else {
+      event.preventDefault()
+      send()
+    }
+  }
 }
 
 const send = () => {

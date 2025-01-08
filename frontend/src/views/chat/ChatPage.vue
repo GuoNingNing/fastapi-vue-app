@@ -13,10 +13,28 @@
     <MessageInput :loading="loading" @send="sendMessage" />
     <!-- 使用封装的 SideMenu 组件 -->
     <SideMenu v-model:show="showDrawer">
-      <van-cell-group title="会话管理" inset border>
-        <van-cell center clickable border @click="chatStore.clearMessages()" title="新建会话" />
-        <van-cell center clickable border @click="chatStore.clearMessages()" title="清除历史" />
-      </van-cell-group>
+      <template #header>
+        <van-row style="line-height: 50px;">
+          <van-col span="18">
+            <van-search placeholder="搜索" />
+          </van-col>
+          <van-col span="3">
+            <van-icon @click="chatStore.clearMessages()" name="delete-o" />
+          </van-col>
+          <van-col span="3">
+            <van-icon @click="chatStore.newSession()" name="chat-o" />
+          </van-col>
+        </van-row>
+      </template>
+      <template #default>
+        <van-cell-group title="聊天" inset border>
+          <van-cell center clickable border @click="chatStore.clearMessages()" title="aaa" />
+          <van-cell center clickable border @click="chatStore.clearMessages()" title="bbb" />
+        </van-cell-group>
+      </template>
+      <template #footer>
+        footer
+      </template>
     </SideMenu>
   </div>
 </template>

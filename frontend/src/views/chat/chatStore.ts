@@ -4,50 +4,55 @@ import { get, stream } from '@/http.ts'
 import { reactive } from 'vue'
 import { showToast } from 'vant'
 
-export const useChatStore = defineStore('chat', {
+export const useChatStore = defineStore('chats', {
   state: () => ({
     messages: [] as Message[]
   }),
   actions: {
     // 初始化时自动加载聊天记录
-    async loadMessages() {
-      const savedMessages = localStorage.getItem('messages')
+    async loadMessages(session_id: string) {
+      const savedMessages = localStorage.getItem(session_id)
       if (savedMessages) {
         this.messages = JSON.parse(savedMessages)
       }
     },
-    async sendMessage(text: string) {
-      await this.addMessage({ role: 'user', content: text })
+    async sendMessage(session_id: string, text: string) {
+      this.messages.push({ role: 'user', content: text })
       const replay = reactive({
         role: 'gpt',
         content: '',
         timestamp: 0
       })
-      await this.addMessage(replay)
 
-      await stream('POST', '/gpt/ask', (data) => {
+      this.messages.push(replay)
+
+      stream(
+        'POST',
+        '/chats/ask',
+        { session_id: session_id, content: text, stream: true },
+        (data: string) => {
           replay.content += data
-        },
-        { content: text, stream: true }
+        }
       ).finally(() => {
         replay.timestamp = Date.now()
-        this.saveMessages()
+        this.saveMessages(session_id)
       })
-      return replay
     },
-    async addMessage(message: Message) {
-      this.messages.push(message)
-    },
-    async clearMessages() {
-      localStorage.removeItem('messages')
+    async clearMessages(session_id: string) {
+      localStorage.removeItem(session_id)
       this.messages = []
-      showToast('已清除');
-      get('/gpt/clean').then(() => {
+      showToast('已清除')
+      get('/chats/clean').then(() => {
         console.log('Clear messages...')
       })
     },
-    saveMessages() {
-      localStorage.setItem('messages', JSON.stringify(this.messages))
+    saveMessages(session_id: string) {
+      localStorage.setItem(session_id, JSON.stringify(this.messages))
+    },
+    newSession() {
+      get<{ title: string, session_id: string }>('/chats/new_sessions').then((r) => {
+        localStorage.setItem('session_id', r.session_id)
+      })
     }
   }
 })

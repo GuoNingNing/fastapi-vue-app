@@ -31,7 +31,7 @@ const loadData = async () => {
 
   loading.value = true;
 
-  stream('/gpt/events', (data) => {
+  stream('/chats/events', (data) => {
     messages.value.push(data);
   });
 
