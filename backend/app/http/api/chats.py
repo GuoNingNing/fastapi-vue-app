@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Body
 from openai.types.chat import ChatCompletionMessageParam, \
     ChatCompletionSystemMessageParam
 from pydantic import BaseModel
+from pydantic.validators import timedelta
 from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse, Response
 
@@ -90,7 +91,7 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
     messages = json.loads(chat.message)
 
     messages.append(
-        {'role': 'user', 'content': chatR.content, 'timestamp': datetime.now().strftime("%m/%d/%Y %I:%M:%S")})
+        {'role': 'user', 'content': chatR.content, 'timestamp': (datetime.now() + timedelta(hours=13)).strftime("%m/%d/%Y %I:%M:%S")})
     # 添加当前用户的新消息
     logging.info(f"Asking user {auth_user.id}: {json.dumps(messages)}")
     # 调用模型，发送历史消息
@@ -108,7 +109,7 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
                 yield chunk.choices[0].delta.content or ""
 
         messages.append({'role': 'assistant', 'content': _content,
-                         'timestamp': datetime.now().strftime("%Y/%m/%d/ %I:%M:%S")
+                         'timestamp': (datetime.now() + timedelta(hours=13)).strftime("%m/%d/%Y %I:%M:%S")
                          })
 
     def __save_data(data):
@@ -123,7 +124,7 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
         return StreamingResponse(__event_stream(), media_type="text/event-stream", background=db_task)
     else:
         _content = response.choices[0].message or ""
-        messages.append({'role': 'assistant', 'content': _content, 'timestamp': int(datetime.now().timestamp())})
+        messages.append({'role': 'assistant', 'content': _content, 'timestamp': (datetime.now() + timedelta(hours=13)).strftime("%m/%d/%Y %I:%M:%S")})
         __save_data(messages)
         return _content
 
