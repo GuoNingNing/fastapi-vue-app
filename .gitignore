@@ -1,4 +1,5 @@
 .idea
 fastapi.db
 backend/.env
+backend/fastapi.db
 frontend/node_modules
