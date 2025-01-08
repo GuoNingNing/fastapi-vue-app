@@ -15,13 +15,10 @@
     <SideMenu v-model:show="showDrawer">
       <template #header>
         <van-row style="line-height: 50px">
-          <van-col span="18">
+          <van-col span="20">
             <van-search placeholder="搜索" />
           </van-col>
-          <van-col span="3">
-            <van-icon size="24" @click="chatStore.delSession();showDrawer = false" name="delete-o" />
-          </van-col>
-          <van-col span="3">
+          <van-col span="4">
             <van-icon size="24" @click="chatStore.newSession();showDrawer = false" name="chat-o" />
           </van-col>
         </van-row>
@@ -72,12 +69,10 @@ const sendMessage = async (text: string) => {
   loading.value = false
 }
 
-const chats = ref<[Chat]>()
+const chats = computed(() => chatStore.chats)
 
 onMounted(() => {
   list_session((data) => {
-    console.log(data)
-    chats.value = data
     chatStore.init(data)
   })
 })
