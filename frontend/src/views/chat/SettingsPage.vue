@@ -28,7 +28,6 @@ import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { showNotify } from 'vant' // 导入 showNotify 组件
 import { post } from '@/http'
-import { useChatStore } from '@/views/chat/chatStore.ts'
 
 // 定义组件内部的响应式数据
 const prompt = reactive({
@@ -62,9 +61,8 @@ const goBack = () => {
   router.go(-1) // 返回上一步
 }
 
-const chatStore = useChatStore()
 
-const cleanHistory = chatStore.clearMessages()
+const cleanHistory = () => {}
 
 onMounted(async () => {
 
