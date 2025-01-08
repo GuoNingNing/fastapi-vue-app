@@ -25,6 +25,7 @@ export const useChatStore = defineStore('chats', {
     async newSession() {
       console.log('Click newSession')
       new_session((chat) => {
+
         this.session_id = chat.session_id
         this.message = []
         this.chats.push(chat)
