@@ -3,14 +3,15 @@ import logging
 import os.path
 import time
 import uuid
+from datetime import datetime
 from typing import List, Dict
 
 from fastapi import APIRouter, Depends, Body
-from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionMessageParam, \
-    ChatCompletionAssistantMessageParam, ChatCompletionSystemMessageParam
+from openai.types.chat import ChatCompletionMessageParam, \
+    ChatCompletionSystemMessageParam
 from pydantic import BaseModel
-from starlette.responses import StreamingResponse, Response
 from starlette.background import BackgroundTask
+from starlette.responses import StreamingResponse, Response
 
 from app.http import deps
 from app.http.deps import get_db
@@ -18,7 +19,7 @@ from app.models.chat import Chat
 from app.models.user import User
 from config.config import settings as app_settings
 from config.database import openai_settings
-from utils import files, youtube
+from utils import files
 
 router = APIRouter(
     prefix="/chats"
@@ -42,86 +43,83 @@ sys_prompt = ChatCompletionSystemMessageParam(role='system',
 
 class ChatRequest(BaseModel):
     session_id: str
-    content: str
+    content: str = None
     stream: bool = False
 
 
-@router.get("/new_sessions", dependencies=[Depends(get_db)])
-def new_sessions(auth_user: User = Depends(deps.get_auth_user)):
-    session_id = uuid.uuid4().hex
-    Chat.insert(user_id=auth_user.id, session_id=session_id, message='[]').execute()
+@router.get("/new_session", dependencies=[Depends(get_db)])
+def new_session(auth_user: User = Depends(deps.get_auth_user)):
+    chat = Chat(user_id=auth_user.id, session_id=uuid.uuid4().hex)
+    logging.info(f"New session created: {chat}")
+    chat.save()
+    return chat.__data__
 
-    return {"title": "新会话", "session_id": session_id}
 
-
-@router.get("/del_sessions", dependencies=[Depends(get_db)])
-def del_sessions(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
+@router.get("/del_session", dependencies=[Depends(get_db)])
+def del_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
     chat = Chat.get(user_id=auth_user.id, session_id=session_id)
     if chat:
         chat.delete_instance()
 
-    return {"session_id": session_id}
+    return chat.__data__
 
 
-@router.get("/sessions", dependencies=[Depends(get_db)])
-def sessions(auth_user: User = Depends(deps.get_auth_user)):
+@router.get("/get_session", dependencies=[Depends(get_db)])
+def get_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
+    chat = Chat.get_or_none(user_id=auth_user.id, session_id=session_id)
+    return chat.__data__
+
+
+@router.get("/list_session", dependencies=[Depends(get_db)])
+def list_session(auth_user: User = Depends(deps.get_auth_user)):
     # 使用列表推导式获取所有 session_id
-    sessions = [{"title": c.title, "session_id": c.session_id} for c in Chat.filter(user_id=auth_user.id)]
+    chats = [c.__data__ for c in Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc())]
 
-    return sessions
-
-
-@router.get("/history", dependencies=[Depends(get_db)])
-def history(auth_user: User = Depends(deps.get_auth_user)):
-    if auth_user.id not in user_message_history:
-        user_message_history[auth_user.id] = []
-    return user_message_history[auth_user.id]
-
-
-@router.get("/clean", dependencies=[Depends(get_db)])
-def clean(auth_user: User = Depends(deps.get_auth_user)):
-    user_message_history[auth_user.id] = []
+    return chats
 
 
 @router.post("/ask", dependencies=[Depends(get_db)])
-def ask(chat: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
-    c = Chat.get_or_none(user_id=auth_user.id, session_id=chat.session_id)
-    # 当前用户的历史消息
-    messages = json.loads(c.message)
+def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
+    if chatR.session_id == '':
+        chatR.session_id = uuid.uuid4().hex
+    chat = Chat.get_or_create(user_id=auth_user.id, session_id=chatR.session_id)[0]
 
+    messages = json.loads(chat.message)
+
+    messages.append({'role': 'user', 'content': chatR.content, 'timestamp': int(datetime.now().timestamp())})
     # 添加当前用户的新消息
-    messages.append({'role': 'user', 'content': chat.content})
-
-    logging.info(f"Asking user {auth_user.id}: {chat.content}")
+    logging.info(f"Asking user {auth_user.id}: {json.dumps(messages)}")
     # 调用模型，发送历史消息
     response = __client.chat.completions.create(
-        messages=[sys_prompt] + messages,
+        messages=messages,
         model="gpt-4o-mini",
-        stream=chat.stream
+        stream=chatR.stream
     )
 
-    async def event_stream():
+    async def __event_stream():
         _content = ""
         for chunk in response:
             if len(chunk.choices) > 0 and chunk.choices[0].delta.content is not None:
                 _content += chunk.choices[0].delta.content
                 yield chunk.choices[0].delta.content or ""
 
-        messages.append({'role': 'assistant', 'content': _content})
-        c.message = json.dumps(messages)
-        c.save()
+        messages.append({'role': 'assistant', 'content': _content, 'timestamp': int(datetime.now().timestamp())})
 
-    def save_data(data):
-        logging.info(f"Saving data: {data}")
+    def __save_data(data):
+        chat.message = json.dumps(data)
+        chat.save()
+        logging.info(f"Saved message: {chat.__data__}")
 
-    db_task = BackgroundTask(save_data, data=messages)
+    db_task = BackgroundTask(__save_data, data=messages)
 
-    if chat.stream:
+    if chatR.stream:
         # 返回流式响应
-        return StreamingResponse(event_stream(), media_type="text/event-stream", background=db_task)
+        return StreamingResponse(__event_stream(), media_type="text/event-stream", background=db_task)
     else:
-        logging.info(response.choices[0].message)
-        return response.choices[0].message.content or ''
+        _content = response.choices[0].message or ""
+        messages.append({'role': 'assistant', 'content': _content, 'timestamp': int(datetime.now().timestamp())})
+        __save_data(messages)
+        return _content
 
 
 @router.post("/set_sys_prompt", dependencies=[Depends(get_db)])

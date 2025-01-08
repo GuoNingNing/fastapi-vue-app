@@ -1,64 +1,79 @@
 import { defineStore } from 'pinia'
-import type { Message } from './chatTypes.ts'
-import { get, stream } from '@/http.ts'
+import type { Chat, Message } from './chatTypes.ts'
+import { stream } from '@/http.ts'
 import { reactive } from 'vue'
 import { showToast } from 'vant'
+import { del_session, new_session } from '@/views/chat/api.ts'
 
 export const useChatStore = defineStore('chats', {
   state: () => ({
+    title: '',
     session_id: '',
-    messages: [] as Message[],
+    sessions: [],
+    message: [] as Message[],
+    chats: [] as Chat[]
   }),
   actions: {
-    // 初始化时自动加载聊天记录
-    loadMessages() {
-      this.session_id = localStorage.getItem('session_id') || 'default'
-      this.messages = JSON.parse(localStorage.getItem(this.session_id) || '[]')
+    async init(chats: Chat[]) {
+      this.chats = chats || []
+      this.session_id = localStorage.getItem('session_id') || chats[0].session_id
+      const chat = chats.find(c => c.session_id == this.session_id)
+      this.message = JSON.parse(chat?.message || '[]')
+
+      this.updateStore()
+    },
+    async newSession() {
+      console.log('Click newSession')
+      new_session((chat) => {
+        this.session_id = chat.session_id
+        this.message = []
+        this.chats.push(chat)
+        this.updateStore()
+        showToast('开始新会话')
+      })
+    },
+    delSession(session_id: string) {
+      del_session(session_id)
+      this.chats = [...this.chats.filter(c => c.session_id == session_id)]
+      this.updateStore()
+      showToast('删除成功')
+    },
+    checkSession(session_id: string) {
+      console.log('checkSession', session_id)
+      const chat = this.chats.find(c => c.session_id == session_id)
+      this.session_id = session_id
+      this.message = JSON.parse(chat?.message || '[]')
+
+      this.updateStore()
     },
     async sendMessage(text: string) {
       console.log('sendMessage session_id', this.session_id, text)
-      this.messages.push({ role: 'user', content: text })
+      this.message.push({ role: 'user', content: text, timestamp: Date.now() })
+
       const replay = reactive({
         role: 'gpt',
         content: '',
-        timestamp: 0,
+        timestamp: 0
       })
 
-      this.messages.push(replay)
+      this.message.push(replay)
 
       stream(
         'POST',
         '/chats/ask',
         { session_id: this.session_id, content: text, stream: true },
-        (data: string) => { replay.content += data },
+        (data: string) => {
+          replay.content += data
+        }
       ).finally(() => {
-        replay.timestamp = Date.now()
-        this.saveMessages()
+        this.updateStore()
       })
     },
-    async clearMessages() {
-      this.messages = []
-      localStorage.setItem(this.session_id, JSON.stringify(this.messages))
-      showToast('已清除')
-      // get('/chats/clean').then(() => {
-      //   console.log('Clear messages...')
-      // })
-    },
-    saveMessages() {
-      localStorage.setItem(this.session_id, JSON.stringify(this.messages))
-    },
-    checkSession(session_id: string) {
-      console.log('checkSession', session_id)
-      localStorage.setItem('session_id', session_id)
-      this.loadMessages()
-    },
-    newSession() {
-      console.log('Click newSession')
-      get<{ title: string; session_id: string }>('/chats/new_sessions').then((r) => {
-        localStorage.setItem('session_id', r.session_id)
-        this.loadMessages()
-        showToast('开始新会话')
-      })
+    updateStore() {
+      console.log(this.chats)
+      localStorage.setItem('session_id', this.session_id)
+      localStorage.setItem('chats', JSON.stringify(this.chats))
+      localStorage.setItem(this.session_id, JSON.stringify(this.message))
     }
-  },
+  }
 })

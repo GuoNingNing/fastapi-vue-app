@@ -8,8 +8,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import MarkdownRander from '@/components/MarkdownRander.vue';
+import { computed } from 'vue'
+import MarkdownRander from '@/components/MarkdownRander.vue'
 
 // 确保传递正确的 prop 名称
 const props = defineProps({
@@ -17,12 +17,12 @@ const props = defineProps({
     type: Object,
     required: true
   }
-});
+})
 
-const role = computed(() => (props.message.role === 'user' ? 'user' : 'gpt'));
+const role = computed(() => (props.message.role === 'user' ? 'user' : 'gpt'))
 const timestamp = computed(() =>
-  props.message.timestamp === 0 ? '胡编乱造中...' : new Date(props.message.timestamp || Date.now()).toLocaleTimeString()
-);
+  props.message.timestamp === 0 ?
+    '胡编乱造中...' : new Date(props.message.timestamp || Date.now()).toLocaleTimeString())
 </script>
 
 <style scoped>
