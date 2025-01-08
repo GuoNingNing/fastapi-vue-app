@@ -6,22 +6,22 @@ import { showToast } from 'vant'
 
 export const useChatStore = defineStore('chats', {
   state: () => ({
-    messages: [] as Message[]
+    session_id: '',
+    messages: [] as Message[],
   }),
   actions: {
     // 初始化时自动加载聊天记录
-    async loadMessages(session_id: string) {
-      const savedMessages = localStorage.getItem(session_id)
-      if (savedMessages) {
-        this.messages = JSON.parse(savedMessages)
-      }
+    loadMessages() {
+      this.session_id = localStorage.getItem('session_id') || 'default'
+      this.messages = JSON.parse(localStorage.getItem(this.session_id) || '[]')
     },
-    async sendMessage(session_id: string, text: string) {
+    async sendMessage(text: string) {
+      console.log('sendMessage session_id', this.session_id, text)
       this.messages.push({ role: 'user', content: text })
       const replay = reactive({
         role: 'gpt',
         content: '',
-        timestamp: 0
+        timestamp: 0,
       })
 
       this.messages.push(replay)
@@ -29,30 +29,36 @@ export const useChatStore = defineStore('chats', {
       stream(
         'POST',
         '/chats/ask',
-        { session_id: session_id, content: text, stream: true },
-        (data: string) => {
-          replay.content += data
-        }
+        { session_id: this.session_id, content: text, stream: true },
+        (data: string) => { replay.content += data },
       ).finally(() => {
         replay.timestamp = Date.now()
-        this.saveMessages(session_id)
+        this.saveMessages()
       })
     },
-    async clearMessages(session_id: string) {
-      localStorage.removeItem(session_id)
+    async clearMessages() {
       this.messages = []
+      localStorage.setItem(this.session_id, JSON.stringify(this.messages))
       showToast('已清除')
-      get('/chats/clean').then(() => {
-        console.log('Clear messages...')
-      })
+      // get('/chats/clean').then(() => {
+      //   console.log('Clear messages...')
+      // })
     },
-    saveMessages(session_id: string) {
-      localStorage.setItem(session_id, JSON.stringify(this.messages))
+    saveMessages() {
+      localStorage.setItem(this.session_id, JSON.stringify(this.messages))
+    },
+    checkSession(session_id: string) {
+      console.log('checkSession', session_id)
+      localStorage.setItem('session_id', session_id)
+      this.loadMessages()
     },
     newSession() {
-      get<{ title: string, session_id: string }>('/chats/new_sessions').then((r) => {
+      console.log('Click newSession')
+      get<{ title: string; session_id: string }>('/chats/new_sessions').then((r) => {
         localStorage.setItem('session_id', r.session_id)
+        this.loadMessages()
+        showToast('开始新会话')
       })
     }
-  }
+  },
 })

@@ -10,6 +10,7 @@ from openai.types.chat import ChatCompletionUserMessageParam, ChatCompletionMess
     ChatCompletionAssistantMessageParam, ChatCompletionSystemMessageParam
 from pydantic import BaseModel
 from starlette.responses import StreamingResponse, Response
+from starlette.background import BackgroundTask
 
 from app.http import deps
 from app.http.deps import get_db
@@ -40,6 +41,7 @@ sys_prompt = ChatCompletionSystemMessageParam(role='system',
 
 
 class ChatRequest(BaseModel):
+    session_id: str
     content: str
     stream: bool = False
 
@@ -64,9 +66,9 @@ def del_sessions(session_id: str, auth_user: User = Depends(deps.get_auth_user))
 @router.get("/sessions", dependencies=[Depends(get_db)])
 def sessions(auth_user: User = Depends(deps.get_auth_user)):
     # 使用列表推导式获取所有 session_id
-    s_id = [chat.session_id for chat in Chat.select(Chat.session_id).filter(user_id=auth_user.id)]
+    sessions = [{"title": c.title, "session_id": c.session_id} for c in Chat.filter(user_id=auth_user.id)]
 
-    return {"sessions": s_id}
+    return sessions
 
 
 @router.get("/history", dependencies=[Depends(get_db)])
@@ -82,25 +84,14 @@ def clean(auth_user: User = Depends(deps.get_auth_user)):
 
 
 @router.post("/ask", dependencies=[Depends(get_db)])
-async def ask(chat: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
-    # 获取用户历史消息，如果不存在则初始化为空列表
-    if auth_user.id not in user_message_history:
-        user_message_history[auth_user.id] = []
-
+def ask(chat: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
+    c = Chat.get_or_none(user_id=auth_user.id, session_id=chat.session_id)
     # 当前用户的历史消息
-    messages = user_message_history[auth_user.id]
-
-    if chat.content.startswith("@youtube"):
-        v_info = youtube.get_best_video_info(chat.content.split("@youtube")[1], cookies_path)
-        chat.content += f"""下面是从这个URL中获取的信息：
-        ```json
-        {json.dumps(v_info, indent=2)}
-        ```
-        """
-        # messages.append(ChatCompletionAssistantMessageParam(role='assistant', content=_c))
+    messages = json.loads(c.message)
 
     # 添加当前用户的新消息
-    messages.append(ChatCompletionUserMessageParam(role='user', content=chat.content))
+    messages.append({'role': 'user', 'content': chat.content})
+
     logging.info(f"Asking user {auth_user.id}: {chat.content}")
     # 调用模型，发送历史消息
     response = __client.chat.completions.create(
@@ -116,12 +107,18 @@ async def ask(chat: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
                 _content += chunk.choices[0].delta.content
                 yield chunk.choices[0].delta.content or ""
 
-        messages.append(ChatCompletionAssistantMessageParam(role='assistant', content=_content))
-        logging.info(messages)
+        messages.append({'role': 'assistant', 'content': _content})
+        c.message = json.dumps(messages)
+        c.save()
+
+    def save_data(data):
+        logging.info(f"Saving data: {data}")
+
+    db_task = BackgroundTask(save_data, data=messages)
 
     if chat.stream:
         # 返回流式响应
-        return StreamingResponse(event_stream(), media_type="text/event-stream")
+        return StreamingResponse(event_stream(), media_type="text/event-stream", background=db_task)
     else:
         logging.info(response.choices[0].message)
         return response.choices[0].message.content or ''

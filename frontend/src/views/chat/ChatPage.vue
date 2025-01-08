@@ -14,7 +14,7 @@
     <!-- 使用封装的 SideMenu 组件 -->
     <SideMenu v-model:show="showDrawer">
       <template #header>
-        <van-row style="line-height: 50px;">
+        <van-row style="line-height: 50px">
           <van-col span="18">
             <van-search placeholder="搜索" />
           </van-col>
@@ -28,23 +28,29 @@
       </template>
       <template #default>
         <van-cell-group title="聊天" inset border>
-          <van-cell center clickable border @click="chatStore.clearMessages()" title="aaa" />
-          <van-cell center clickable border @click="chatStore.clearMessages()" title="bbb" />
+          <van-cell
+            v-for="s in sessions"
+            :title="s?.title"
+            :key="s?.session_id"
+            center
+            clickable
+            border
+            @click="chatStore.checkSession(s.session_id)"
+          />
         </van-cell-group>
       </template>
-      <template #footer>
-        footer
-      </template>
+      <template #footer> footer</template>
     </SideMenu>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, reactive } from 'vue'
 import { useChatStore } from './chatStore'
 import ChatBubble from './components/ChatBubble.vue'
 import MessageInput from './components/MessageInput.vue'
 import SideMenu from '@/views/chat/components/SideMenu.vue'
+import { get } from '@/http.ts'
 
 const loading = ref(false)
 const showDrawer = ref(false)
@@ -52,14 +58,25 @@ const chatStore = useChatStore()
 const chatContent = ref(null)
 
 const messages = computed(() => chatStore.messages)
+const sessions = ref<[{ title: string; session_id: string }]>()
 
 const sendMessage = async (text: string) => {
   loading.value = true
   await chatStore.sendMessage(text)
   loading.value = false
 }
+
+async function listSessions() {
+  get<[{ title: string; session_id: string }]>('/chats/sessions').then((s) => {
+    console.log('listSessions', s)
+    sessions.value = s
+    console.log('listSessions', sessions.value)
+  })
+}
+
 onMounted(() => {
   chatStore.loadMessages()
+  listSessions()
 })
 </script>
 
@@ -68,7 +85,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #EDEDED;
+  background-color: #ededed;
 }
 
 .chat-content {
