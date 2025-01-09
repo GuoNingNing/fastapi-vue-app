@@ -3,14 +3,12 @@ import logging
 import os.path
 import time
 import uuid
-from datetime import datetime
 from typing import List, Dict
 
 from fastapi import APIRouter, Depends, Body
 from openai.types.chat import ChatCompletionMessageParam, \
     ChatCompletionSystemMessageParam
 from pydantic import BaseModel
-from pydantic.validators import timedelta
 from starlette.background import BackgroundTask
 from starlette.responses import StreamingResponse, Response
 
@@ -18,6 +16,8 @@ from app.http import deps
 from app.http.deps import get_db
 from app.models.chat import Chat
 from app.models.user import User
+from app.schemas.chat import ChatBase
+from app.schemas.msg import MsgBase
 from config.config import settings as app_settings
 from config.database import openai_settings
 from utils import files
@@ -43,20 +43,20 @@ sys_prompt = ChatCompletionSystemMessageParam(role='system',
 
 
 class ChatRequest(BaseModel):
-    session_id: str
-    content: str = None
+    content: str
+    session_id: str = None
     stream: bool = False
 
 
-@router.get("/new_session", dependencies=[Depends(get_db)])
+@router.get("/new", response_model=ChatBase, dependencies=[Depends(get_db)])
 def new_session(auth_user: User = Depends(deps.get_auth_user)):
     chat = Chat(user_id=auth_user.id, session_id=uuid.uuid4().hex)
     logging.info(f"New session created: {chat}")
     chat.save()
-    return chat.__data__
+    return chat
 
 
-@router.get("/del_session", dependencies=[Depends(get_db)])
+@router.get("/del", dependencies=[Depends(get_db)])
 def del_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
     chat = Chat.get(user_id=auth_user.id, session_id=session_id)
     if chat:
@@ -64,36 +64,28 @@ def del_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
         chat.delete_instance()
 
 
-@router.get("/get_session", dependencies=[Depends(get_db)])
+@router.get("/get", response_model=ChatBase, dependencies=[Depends(get_db)])
 def get_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
-    chat = Chat.get_or_none(user_id=auth_user.id, session_id=session_id)
-    if chat:
-        return chat.__data__
-    else:
-        return None
+    return Chat.get_or_none(user_id=auth_user.id, session_id=session_id)
 
 
-@router.get("/list_session", dependencies=[Depends(get_db)])
+@router.get("/list", response_model=list[ChatBase], dependencies=[Depends(get_db)])
 def list_session(auth_user: User = Depends(deps.get_auth_user)):
     # 使用列表推导式获取所有 session_id
-    chats = [{"title": c.title, "session_id": c.session_id} for c in
-             Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc())]
-
-    return chats
+    return list(Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc()))
 
 
 @router.post("/ask", dependencies=[Depends(get_db)])
 def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
-    if chatR.session_id == '':
+    if chatR.session_id is None:
         chatR.session_id = uuid.uuid4().hex
     chat = Chat.get_or_create(user_id=auth_user.id, session_id=chatR.session_id)[0]
 
     messages = json.loads(chat.message)
 
-    messages.append(
-        {'role': 'user', 'content': chatR.content, 'timestamp': (datetime.now() + timedelta(hours=13)).strftime("%m/%d/%Y %I:%M:%S")})
+    messages.append(MsgBase.user(chatR.content))
     # 添加当前用户的新消息
-    logging.info(f"Asking user {auth_user.id}: {json.dumps(messages)}")
+    logging.info(f"Asking user {auth_user.id}: {messages}")
     # 调用模型，发送历史消息
     response = __client.chat.completions.create(
         messages=messages,
@@ -102,31 +94,29 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
     )
 
     async def __event_stream():
-        _content = ""
+        __content = ""
         for chunk in response:
             if len(chunk.choices) > 0 and chunk.choices[0].delta.content is not None:
-                _content += chunk.choices[0].delta.content
+                __content += chunk.choices[0].delta.content
                 yield chunk.choices[0].delta.content or ""
 
-        messages.append({'role': 'assistant', 'content': _content,
-                         'timestamp': (datetime.now() + timedelta(hours=13)).strftime("%m/%d/%Y %I:%M:%S")
-                         })
+        messages.append(MsgBase.assistant(__content))
 
     def __save_data(data):
+        logging.info(f"Saved message: {data}")
         chat.message = json.dumps(data)
         chat.save()
-        logging.info(f"Saved message: {chat.__data__}")
-
-    db_task = BackgroundTask(__save_data, data=messages)
 
     if chatR.stream:
         # 返回流式响应
-        return StreamingResponse(__event_stream(), media_type="text/event-stream", background=db_task)
+        return StreamingResponse(__event_stream(),
+                                 media_type="text/event-stream",
+                                 background=BackgroundTask(__save_data, data=messages))
     else:
-        _content = response.choices[0].message or ""
-        messages.append({'role': 'assistant', 'content': _content, 'timestamp': (datetime.now() + timedelta(hours=13)).strftime("%m/%d/%Y %I:%M:%S")})
+        msg = response.choices[0].message
+        messages.append(msg.dict())
         __save_data(messages)
-        return _content
+        return msg.content
 
 
 @router.post("/set_sys_prompt", dependencies=[Depends(get_db)])

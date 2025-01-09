@@ -20,9 +20,9 @@ def numeric_random(length: int) -> str:
     return ''.join(str_list)
 
 
-def format_datetime(value: datetime):
+def format_datetime(value: datetime) -> str:
     if not value:
-        return None
+        return ''
     return value.strftime('%Y-%m-%d %H:%M:%S')
 
 
