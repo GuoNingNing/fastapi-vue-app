@@ -6,10 +6,10 @@
       <van-divider />
       <!-- 这里可以嵌套其他内容或组件 -->
       <slot name="default"></slot>  <!-- 使用插槽插入内容 -->
-      <van-tabbar>
+      <van-divider />
+      <div class="footer">
         <slot name="footer"></slot>
-      </van-tabbar>
-
+      </div>
     </div>
   </div>
 </template>
@@ -39,9 +39,6 @@ const closeMenu = () => {
   emit('update:show', false)
 }
 
-
-const value = ''
-
 </script>
 
 <style scoped>
@@ -57,7 +54,7 @@ const value = ''
 }
 
 /* 侧边栏样式 */
-.side-menu {
+.side-menu-overlay .side-menu {
   position: fixed;
   top: 0;
   left: 0;
@@ -68,11 +65,21 @@ const value = ''
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
   border-radius: 0 10px 10px 0;
   transform: translateX(-100%); /* 初始位置在屏幕外 */
-  transition: transform 1.5s ease-in-out;
+  transition: transform 0.3s ease-in-out;
   z-index: 1001;
 }
 
 .side-menu-overlay .side-menu {
   transform: translateX(0); /* 侧边栏弹出 */
+}
+
+.side-menu-overlay .side-menu .footer {
+  position: fixed;
+  bottom: 10px;
+  width: 230px;
+  height: 50px;
+  line-height: 50px;
+  text-align: center;
+  justify-content: center;
 }
 </style>

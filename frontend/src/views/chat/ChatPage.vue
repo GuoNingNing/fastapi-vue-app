@@ -7,18 +7,21 @@
     </van-nav-bar>
     <!-- 聊天区域 -->
     <div class="chat-content" v-scroll>
-      <ChatBubble v-for="(m, i) in messages" :key="i" :message="m" />
+      <template v-if="messages.length === 0">
+        <p class="welcome-message">欢迎来到 ChatGpt！开始聊天吧。</p>
+      </template>
+      <ChatBubble v-for="(m, i) in messages" :key="i" :message="m" v-else />
     </div>
     <!-- 底部输入框和工具栏 -->
     <MessageInput :loading="loading" @send="sendMessage" />
     <!-- 使用封装的 SideMenu 组件 -->
     <SideMenu v-model:show="showDrawer">
       <template #header>
-        <van-row style="line-height: 50px">
+        <van-row style="line-height: 50px; align-items: center;">
           <van-col span="20">
             <van-search placeholder="搜索" />
           </van-col>
-          <van-col span="4">
+          <van-col span="4" style="display: flex; justify-content: center; align-items: center;">
             <van-icon size="24" @click="newSession" name="chat-o" />
           </van-col>
         </van-row>
@@ -40,7 +43,16 @@
           </van-cell>
         </van-cell-group>
       </template>
-      <template #footer>footer</template>
+      <template #footer>
+        <van-row>
+          <van-col span="20" style="background-color: #07c160">
+            {{ me.username }}
+          </van-col>
+          <van-col span="4">
+            <van-icon name="https://fastly.jsdelivr.net/npm/@vant/assets/icon-demo.png" />
+          </van-col>
+        </van-row>
+      </template>
     </SideMenu>
   </div>
 </template>
@@ -51,7 +63,7 @@ import ChatBubble from './components/ChatBubble.vue'
 import MessageInput from './components/MessageInput.vue'
 import SideMenu from '@/views/chat/components/SideMenu.vue'
 import { stream } from '@/http.ts'
-import { type ChatBase, ChatsService } from '@/client'
+import { type ChatBase, ChatsService, UsersService } from '@/client'
 import type { Message } from '@/views/chat/chatTypes.ts'
 
 const loading = ref(false)
@@ -60,6 +72,10 @@ const showDrawer = ref(false)
 const session_id = ref('')
 const chats = ref<ChatBase[]>([])
 const messages = ref<Message[]>([])
+const me = reactive({
+  username: '',
+  avatar: ''
+})
 
 const sendMessage = async (text: string) => {
   messages.value.push({
@@ -90,55 +106,65 @@ const sendMessage = async (text: string) => {
 }
 
 const checkSession = async (sid: string) => {
-  localStorage.setItem('session_id', sid)
+  // 设置当前会话 ID
+  setSessionId(sid)
   session_id.value = sid
 
-  ChatsService.getSession({ query: { session_id: sid } }).then((r) => {
-    messages.value = JSON.parse(r.data?.message || '[]')
-  })
+  // 获取会话消息
+  const response = await ChatsService.getSession({ query: { session_id: sid } })
+  messages.value = JSON.parse(response.data?.message || '[]')
 }
 
 
 const newSession = async () => {
-  ChatsService.newSession().then((res) => {
-    console.log('newSession', res)
-    if (res.data) {
-      session_id.value = res.data?.session_id || ''
-      chats.value.unshift(res.data)
-      checkSession(session_id.value)
-    }
-  })
+  const response = await ChatsService.newSession()
+  console.log('newSession', response)
+  if (response.data) {
+    session_id.value = response.data?.session_id || ''
+    chats.value.unshift(response.data)
+    await checkSession(session_id.value)
+  }
 }
+
 
 const delSession = async (sid: string) => {
+  await ChatsService.delSession({ query: { session_id: sid } })
+  const indexToDelete = chats.value.findIndex((s) => s.session_id === sid)
+// 检查索引是否有效
+  if (indexToDelete !== -1) {
+    // 使用 splice 方法删除该元素
+    chats.value.splice(indexToDelete, 1)
+  }
 
-  ChatsService.delSession({ query: { session_id: sid } }).then((res) => {
-    const indexToDelete = chats.value.findIndex((s) => s.session_id === sid)
-    // 检查索引是否有效
-    if (indexToDelete !== -1) {
-      // 使用 splice 方法删除该元素
-      chats.value.splice(indexToDelete, 1)
-    }
-
-    session_id.value = chats.value[0].session_id
-    checkSession(session_id.value)
-  })
-
+  session_id.value = chats.value[0].session_id
+  await checkSession(session_id.value)
 }
 
+
 const listSession = async () => {
-  ChatsService.listSession().then((r) => {
+  const response = await ChatsService.listSession()
+  if (response.data && response.data.length > 0) {
+    session_id.value = getSessionId() || response.data[0].session_id
+    await checkSession(session_id.value)
+    chats.value = response.data
+  }
 
-    if (r.data && r.data.length > 0) {
-      chats.value = r.data
-
-      if (localStorage.getItem('session_id') === 'undefined') {
-        localStorage.removeItem('session_id')
-      }
-      session_id.value = localStorage.getItem('session_id') || r.data[0].session_id
-      checkSession(session_id.value)
-    }
+  UsersService.me().then((r) => {
+    me.username = r.data?.username || ''
+    me.avatar = r.data?.avatar || ''
   })
+}
+const setSessionId = (sid: string) => {
+  if (sid) localStorage.setItem('session_id', sid)
+}
+
+const getSessionId = () => {
+  let sid = localStorage.getItem('session_id')
+  if (sid === 'undefined') {
+    localStorage.removeItem('session_id')
+    sid = ''
+  }
+  return sid
 }
 
 onMounted(() => {
@@ -158,6 +184,13 @@ onMounted(() => {
   flex: 1;
   overflow-y: auto;
   padding: 5px;
+}
+
+.welcome-message {
+  text-align: center;
+  color: #888888;
+  font-size: 16px;
+  margin-top: 20px;
 }
 
 .active {
