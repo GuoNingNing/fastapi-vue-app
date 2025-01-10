@@ -1,7 +1,7 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import About from '@/views/AboutView.vue';
-import Chat from '@/views/chat/ChatPage.vue';
-import Login from '@/views/LoginPage.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import About from '@/views/AboutView.vue'
+import Chat from '@/views/chat/ChatPage.vue'
+import Login from '@/views/LoginPage.vue'
 
 
 const router = createRouter({
@@ -28,18 +28,18 @@ const router = createRouter({
     }
     // 你可以根据需要继续添加其他路由
   ]
-});
+})
 
 function isLoggedIn() {
-  return !!localStorage.getItem('access_token');
+  return !!localStorage.getItem('access_token')
 }
 
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isLoggedIn()) {
-    next({ path: '/login' });
+    next({ path: '/login' })
   } else {
-    next();
+    next()
   }
-});
+})
 
-export default router;
+export default router

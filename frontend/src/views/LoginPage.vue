@@ -1,12 +1,10 @@
 <template>
+  <van-nav-bar
+    title="登录"
+    left-arrow
+    @click-left="goBack"
+  />
   <div class="login-page">
-    <!-- 标题 -->
-    <van-nav-bar
-      title="登录"
-      left-arrow
-      @click-left="goBack"
-    />
-
     <!-- 登录表单 -->
     <div class="form-container">
       <!-- 用户名输入框 -->
@@ -39,8 +37,8 @@
 
       <!-- 辅助链接 -->
       <div class="link-container">
-        <span @click="register">注册账号</span>
-        <span @click="forgotPassword">忘记密码？</span>
+        <!--        <span @click="register">注册账号</span>-->
+        <!--        <span @click="forgotPassword">忘记密码？</span>-->
       </div>
     </div>
   </div>
@@ -50,8 +48,8 @@
 import { onMounted, ref } from 'vue'
 import { showToast } from 'vant'
 import { useRouter } from 'vue-router'
-import { post } from '@/http.ts'
 import { isLogin } from '@/utils/user'
+import { AuthService } from '@/client'
 
 const router = useRouter()
 const username = ref('')
@@ -63,21 +61,20 @@ const goBack = () => {
 }
 
 // 登录事件
-const login = () => {
+const login = async () => {
   if (!username.value || !password.value) {
     return showToast('请输入用户名和密码')
   }
   showToast('登录中...')
-  // 在这里处理实际的登录逻辑，例如调用接口
-  post('/auth/token', {
-    username: username.value,
-    password: password.value
-  }).then(response => {
-    localStorage.setItem('access_token', response.access_token)
-    router.push('/') // 登录成功后跳转首页
-  }).catch(error => {
-    showToast('登录失败:')
+  const response = await AuthService.token({
+    body: {
+      username: username.value,
+      password: password.value
+    }
   })
+
+  localStorage.setItem('access_token', response.data?.access_token || '')
+  await router.push('/')
 }
 
 // 注册事件
@@ -94,7 +91,7 @@ const forgotPassword = () => {
 
 onMounted(async () => {
   if (isLogin()) {
-    await router.push('/')
+    // await router.push('/')
   }
 })
 
@@ -104,13 +101,14 @@ onMounted(async () => {
 .login-page {
   height: 100vh;
   display: flex;
-  flex-direction: column;
-  text-align: center;
-  background-color: #f5f5f5;
+  justify-content: center;
+  align-items: center;
 }
+
 
 .form-container {
   margin: 20px;
+  width: fit-content;
 }
 
 .login-button {
