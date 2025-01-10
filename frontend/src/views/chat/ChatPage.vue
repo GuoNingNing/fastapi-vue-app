@@ -64,7 +64,7 @@ import MessageInput from './components/MessageInput.vue'
 import SideMenu from '@/views/chat/components/SideMenu.vue'
 import { type ChatBase, ChatsService, UsersService } from '@/client'
 import type { Message } from '@/views/chat/chatTypes.ts'
-import { WebSocketClient } from '@/utils/websocket.ts'
+
 
 const loading = ref(false)
 const showDrawer = ref(false)
@@ -77,64 +77,66 @@ const me = reactive({
   avatar: ''
 })
 
+import {stream} from '@/http.ts'
 // Stream
-// const sendMessage = async (text: string) => {
-//   messages.value.push({
-//     role: 'user',
-//     content: text,
-//     timestamp: new Date(Date.now()).toLocaleString()
-//   })
-//
-//   const replay = reactive({
-//     role: 'gpt',
-//     content: '',
-//     timestamp: ''
-//   })
-//
-//   messages.value.push(replay)
-//
-//   stream(
-//     'POST',
-//     '/api/chats/ask',
-//     { session_id: session_id.value, content: text, stream: true },
-//     (data: string) => {
-//       replay.content += data
-//     }
-//   ).finally(() => {
-//     replay.timestamp = new Date(Date.now()).toLocaleString()
-//     localStorage.setItem(session_id.value, JSON.stringify(messages.value))
-//   })
-// }
-
-const wsBaseUrl = import.meta.env.VITE_APP_WS_BASE_URL
-// 使用 WebSocketClient 类
-const socket = new WebSocketClient(`${wsBaseUrl}/api/chats/ws?token=${localStorage.getItem('access_token')}`)
-
 const sendMessage = async (text: string) => {
-  console.log('发送消息', text)
   messages.value.push({
     role: 'user',
     content: text,
     timestamp: new Date(Date.now()).toLocaleString()
   })
+
   const replay = reactive({
     role: 'gpt',
     content: '',
     timestamp: ''
   })
-  messages.value.push(replay)
-  await socket.sendMessage({ content: text, session_id: session_id.value })
 
-  socket.ws.onmessage = (event) => {
-    if (event.data.startsWith('END') && event.data.endsWith('DNE')) {
-      console.log('发送完毕')
-      replay.timestamp = event.data.replace('END', '').replace('DNE', '')
-      localStorage.setItem(session_id.value, JSON.stringify(messages.value))
-    } else {
-      replay.content += event.data
+  messages.value.push(replay)
+
+  stream(
+    'POST',
+    '/api/chats/ask',
+    { session_id: session_id.value, content: text, stream: true },
+    (data: string) => {
+      replay.content += data
     }
-  }
+  ).finally(() => {
+    replay.timestamp = new Date(Date.now()).toLocaleString()
+    localStorage.setItem(session_id.value, JSON.stringify(messages.value))
+  })
 }
+
+// import { WebSocketClient } from '@/utils/websocket.ts'
+// const wsBaseUrl = import.meta.env.VITE_APP_WS_BASE_URL
+// // 使用 WebSocketClient 类
+// const socket = new WebSocketClient(`${wsBaseUrl}/api/chats/ws?token=${localStorage.getItem('access_token')}`)
+//
+// const sendMessage = async (text: string) => {
+//   console.log('发送消息', text)
+//   messages.value.push({
+//     role: 'user',
+//     content: text,
+//     timestamp: new Date(Date.now()).toLocaleString()
+//   })
+//   const replay = reactive({
+//     role: 'gpt',
+//     content: '',
+//     timestamp: ''
+//   })
+//   messages.value.push(replay)
+//   await socket.sendMessage({ content: text, session_id: session_id.value })
+//
+//   socket.ws.onmessage = (event) => {
+//     if (event.data.startsWith('END') && event.data.endsWith('DNE')) {
+//       console.log('发送完毕')
+//       replay.timestamp = event.data.replace('END', '').replace('DNE', '')
+//       localStorage.setItem(session_id.value, JSON.stringify(messages.value))
+//     } else {
+//       replay.content += event.data
+//     }
+//   }
+// }
 
 const checkSession = async (sid: string) => {
   // 设置当前会话 ID

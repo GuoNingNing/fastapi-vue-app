@@ -145,3 +145,8 @@ python scheduler.py
 FastAPI作者的全栈项目脚手架 [full-stack-fastapi-postgresql](https://github.com/tiangolo/full-stack-fastapi-postgresql)
 
 代码结构组织风格参考 [Laravel框架](https://github.com/laravel/laravel)
+
+
+```shell
+pipreqs ./ --encoding=utf-8 --force
+```
