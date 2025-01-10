@@ -106,9 +106,9 @@ const me = reactive({
 //   })
 // }
 
-
+const wsBaseUrl = import.meta.env.VITE_APP_WS_BASE_URL
 // 使用 WebSocketClient 类
-const socket = new WebSocketClient('ws://127.0.0.1:8000/api/chats/ws?token=' + localStorage.getItem('access_token'))
+const socket = new WebSocketClient(`${wsBaseUrl}/api/chats/ws?token=${localStorage.getItem('access_token')}`)
 
 const sendMessage = async (text: string) => {
   console.log('发送消息', text)

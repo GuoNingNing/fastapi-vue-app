@@ -75,7 +75,7 @@ def list_session(auth_user: User = Depends(deps.get_auth_user)):
     return list(Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc()))
 
 
-@router.websocket("/ws", dependencies=[Depends(get_db)])
+@router.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(..., alias="token")):
     auth_user = deps.get_auth_user(token)
     logging.info(f"WebSocket connection with token: {auth_user.username}")
