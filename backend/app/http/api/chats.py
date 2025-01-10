@@ -5,7 +5,7 @@ import time
 import uuid
 from typing import List, Dict
 
-from fastapi import APIRouter, Depends, Body
+from fastapi import WebSocket, WebSocketDisconnect, APIRouter, Depends, Body, Query
 from openai.types.chat import ChatCompletionMessageParam, \
     ChatCompletionSystemMessageParam
 from pydantic import BaseModel
@@ -73,6 +73,53 @@ def get_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
 def list_session(auth_user: User = Depends(deps.get_auth_user)):
     # 使用列表推导式获取所有 session_id
     return list(Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc()))
+
+
+@router.websocket("/ws", dependencies=[Depends(get_db)])
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(..., alias="token")):
+    auth_user = deps.get_auth_user(token)
+    logging.info(f"WebSocket connection with token: {auth_user.username}")
+
+    await websocket.accept()
+    try:
+        while True:
+            # 接收客户端的 JSON 消息
+            data = await websocket.receive_json()
+            chatR = ChatRequest(**data)
+
+            if chatR.session_id is None:
+                chatR.session_id = uuid.uuid4().hex
+            chat = Chat.get_or_create(user_id=auth_user.id, session_id=chatR.session_id)[0]
+
+            messages = json.loads(chat.message)
+            messages.append(MsgBase.user(chatR.content))
+            logging.info(f"Asking user {auth_user.id}: {messages}")
+
+            response = __client.chat.completions.create(
+                messages=messages,
+                model="gpt-4o-mini",
+                stream=True
+            )
+
+            __content = ""
+            for chunk in response:
+                if len(chunk.choices) > 0:
+                    _c = chunk.choices[0].delta.content or ""
+                    __content += _c
+                    await websocket.send_text(_c)
+
+            replay = MsgBase.assistant(__content)
+            messages.append(replay)
+
+            # 发送响应后保存聊天记录
+            logging.info(f"Saved message: {messages}")
+            chat.message = json.dumps(messages)
+            chat.save()
+            await websocket.send_text(f"END{replay['timestamp']}DNE")
+
+    except WebSocketDisconnect:
+        logging.info(f"Client disconnected")
+        await websocket.close()
 
 
 @router.post("/ask", dependencies=[Depends(get_db)])

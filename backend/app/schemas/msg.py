@@ -11,9 +11,9 @@ class MsgBase(BaseModel):
     timestamp: str
 
     @staticmethod
-    def user(content: str) -> "MsgBase":
+    def user(content: str):
         return MsgBase(role="user", content=content, timestamp=format_datetime(datetime.now())).dict()
 
     @staticmethod
-    def assistant(content: str) -> "MsgBase":
+    def assistant(content: str):
         return MsgBase(role="assistant", content=content, timestamp=format_datetime(datetime.now())).dict()
