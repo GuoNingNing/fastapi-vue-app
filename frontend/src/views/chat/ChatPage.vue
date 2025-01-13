@@ -4,6 +4,9 @@
       <template #left>
         <van-icon name="more-o" size="24" />
       </template>
+      <template #right>
+        <van-icon size="24" @click="newSession" name="chat-o" />
+      </template>
     </van-nav-bar>
     <!-- 聊天区域 -->
     <div class="chat-content" v-scroll>
@@ -18,11 +21,8 @@
     <SideMenu v-model:show="showDrawer">
       <template #header>
         <van-row style="line-height: 50px; align-items: center;">
-          <van-col span="20">
+          <van-col span="24">
             <van-search placeholder="搜索" />
-          </van-col>
-          <van-col span="4" style="display: flex; justify-content: center; align-items: center;">
-            <van-icon size="24" @click="newSession" name="chat-o" />
           </van-col>
         </van-row>
       </template>
@@ -108,10 +108,13 @@ const sendMessage = async (text: string) => {
     }
   ).finally(() => {
     replay.timestamp = new Date(Date.now()).toLocaleString()
-    if (active.title === 'New Chat') {
+    if (active.title === 'New Chat' && active.session_id !== '') {
       ChatsService.title({ query: { session_id: active.session_id } }).then((res) => {
+        console.log('title:', res)
         active.title = res.data?.title || 'New Chat'
         active.session_id = res.data?.session_id || ''
+
+        sessions.value.unshift({ ...active })
       })
     }
 
@@ -119,6 +122,10 @@ const sendMessage = async (text: string) => {
   })
 }
 const checkSession = async (sid: string) => {
+  console.log('checkSession:', sid)
+  if (sid === undefined) {
+    return
+  }
   // 获取会话消息
   const response = await ChatsService.getSession({ query: { session_id: sid } })
   active.title = response.data?.title || 'New Chat'
@@ -126,15 +133,20 @@ const checkSession = async (sid: string) => {
   messages.value = JSON.parse(response.data?.message || '[]')
   chatStore()
 }
-
-
 const newSession = async () => {
+
+  if (messages.value.length === 0) {
+    showToast('已是最新会话')
+    return
+  }
   const response = await ChatsService.newSession()
+  console.log('newSession:', response)
   active.title = response.data?.title || 'New Chat'
   active.session_id = response.data?.session_id || ''
 
-  showToast(active.title)
+  // sessions.value.unshift(active)
 
+  showToast(active.title + active.session_id)
   messages.value = []
   showDrawer.value = false
   chatStore()
@@ -142,16 +154,24 @@ const newSession = async () => {
 
 
 const delSession = async (sid: string) => {
+
   await ChatsService.delSession({ query: { session_id: sid } })
+
   const indexToDelete = sessions.value.findIndex((s) => s.session_id === sid)
-// 检查索引是否有效
+  // 检查索引是否有效
   if (indexToDelete !== -1) {
+    showToast(sessions.value[indexToDelete].title + ' 已删除')
     // 使用 splice 方法删除该元素
     sessions.value.splice(indexToDelete, 1)
   }
 
-  active.session_id = sessions.value[0].session_id
-  await checkSession(active.session_id)
+  if (active.session_id === sid) {
+    if (sessions.value.length === 0) {
+      await newSession()
+    } else {
+      await checkSession(sessions.value[0]?.session_id)
+    }
+  }
 }
 
 
