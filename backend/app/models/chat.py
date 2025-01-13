@@ -1,9 +1,17 @@
 import uuid
-from datetime import datetime
 
 from peewee import CharField, IntegerField
 
 from app.models.base_model import BaseModel
+
+
+class Session(BaseModel):
+    class Meta:
+        table_name = 'sessions'
+
+    id = IntegerField(primary_key=True)
+    user_id = CharField()
+    session_id = CharField(default=uuid.uuid4().hex)
 
 
 class Chat(BaseModel):
@@ -11,7 +19,7 @@ class Chat(BaseModel):
         table_name = 'chats'
 
     id = IntegerField(primary_key=True)
-    title = CharField(default=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    title = CharField(default='New Chat')
     user_id = CharField()
     session_id = CharField(default=uuid.uuid4().hex)
     message = CharField(default='[]')

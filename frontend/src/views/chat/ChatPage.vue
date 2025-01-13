@@ -1,6 +1,6 @@
 <template>
   <div class="chat-page">
-    <van-nav-bar title="ChatGpt" left-arrow @click-left="showDrawer = true">
+    <van-nav-bar :title="active.title" left-arrow @click-left="showDrawer = true">
       <template #left>
         <van-icon name="more-o" size="24" />
       </template>
@@ -29,16 +29,16 @@
       <template #default>
         <van-cell-group title="聊天" inset border>
           <van-cell
-            v-for="c in chats"
-            :title="c?.title"
-            :key="c?.session_id"
+            v-for="s in sessions"
+            :title="s?.title"
+            :key="s?.session_id"
             center
             border
-            @click="checkSession(c.session_id)"
-            :class="session_id === c.session_id ? 'active' : ''"
+            @click="checkSession(s.session_id)"
+            :class="active.session_id === s.session_id ? 'active' : ''"
           >
             <template #right-icon>
-              <van-icon name="delete" class="delete-icon" @click="delSession(c.session_id)" />
+              <van-icon name="delete" class="delete-icon" @click="delSession(s.session_id)" />
             </template>
           </van-cell>
         </van-cell-group>
@@ -62,22 +62,27 @@ import { onMounted, reactive, ref } from 'vue'
 import ChatBubble from './components/ChatBubble.vue'
 import MessageInput from './components/MessageInput.vue'
 import SideMenu from '@/views/chat/components/SideMenu.vue'
-import { type ChatBase, ChatsService, UsersService } from '@/client'
+import { type ChatSession, ChatsService, UsersService } from '@/client'
 import type { Message } from '@/views/chat/chatTypes.ts'
+import { stream } from '@/http.ts'
+import { showToast } from 'vant'
 
 
 const loading = ref(false)
 const showDrawer = ref(false)
 
-const session_id = ref('')
-const chats = ref<ChatBase[]>([])
+const active = reactive({
+  title: 'New Chat',
+  session_id: ''
+})
+const sessions = ref<ChatSession[]>([])
 const messages = ref<Message[]>([])
+
 const me = reactive({
   username: '',
   avatar: ''
 })
 
-import {stream} from '@/http.ts'
 // Stream
 const sendMessage = async (text: string) => {
   messages.value.push({
@@ -97,89 +102,82 @@ const sendMessage = async (text: string) => {
   stream(
     'POST',
     '/api/chats/ask',
-    { session_id: session_id.value, content: text, stream: true },
+    { session_id: active.session_id, content: text, stream: true },
     (data: string) => {
       replay.content += data
     }
   ).finally(() => {
     replay.timestamp = new Date(Date.now()).toLocaleString()
-    localStorage.setItem(session_id.value, JSON.stringify(messages.value))
+    if (active.title === 'New Chat') {
+      ChatsService.title({ query: { session_id: active.session_id } }).then((res) => {
+        active.title = res.data?.title || 'New Chat'
+        active.session_id = res.data?.session_id || ''
+      })
+    }
+
+    chatStore()
   })
 }
-
-// import { WebSocketClient } from '@/utils/websocket.ts'
-// const wsBaseUrl = import.meta.env.VITE_APP_WS_BASE_URL
-// // 使用 WebSocketClient 类
-// const socket = new WebSocketClient(`${wsBaseUrl}/api/chats/ws?token=${localStorage.getItem('access_token')}`)
-//
-// const sendMessage = async (text: string) => {
-//   console.log('发送消息', text)
-//   messages.value.push({
-//     role: 'user',
-//     content: text,
-//     timestamp: new Date(Date.now()).toLocaleString()
-//   })
-//   const replay = reactive({
-//     role: 'gpt',
-//     content: '',
-//     timestamp: ''
-//   })
-//   messages.value.push(replay)
-//   await socket.sendMessage({ content: text, session_id: session_id.value })
-//
-//   socket.ws.onmessage = (event) => {
-//     if (event.data.startsWith('END') && event.data.endsWith('DNE')) {
-//       console.log('发送完毕')
-//       replay.timestamp = event.data.replace('END', '').replace('DNE', '')
-//       localStorage.setItem(session_id.value, JSON.stringify(messages.value))
-//     } else {
-//       replay.content += event.data
-//     }
-//   }
-// }
-
 const checkSession = async (sid: string) => {
-  // 设置当前会话 ID
-  setSessionId(sid)
-  session_id.value = sid
-
   // 获取会话消息
   const response = await ChatsService.getSession({ query: { session_id: sid } })
+  active.title = response.data?.title || 'New Chat'
+  active.session_id = response.data?.session_id || ''
   messages.value = JSON.parse(response.data?.message || '[]')
+  chatStore()
 }
 
 
 const newSession = async () => {
   const response = await ChatsService.newSession()
-  console.log('newSession', response)
-  if (response.data) {
-    session_id.value = response.data?.session_id || ''
-    chats.value.unshift(response.data)
-    await checkSession(session_id.value)
-  }
+  active.title = response.data?.title || 'New Chat'
+  active.session_id = response.data?.session_id || ''
+
+  showToast(active.title)
+
+  messages.value = []
+  showDrawer.value = false
+  chatStore()
 }
 
 
 const delSession = async (sid: string) => {
   await ChatsService.delSession({ query: { session_id: sid } })
-  const indexToDelete = chats.value.findIndex((s) => s.session_id === sid)
+  const indexToDelete = sessions.value.findIndex((s) => s.session_id === sid)
 // 检查索引是否有效
   if (indexToDelete !== -1) {
     // 使用 splice 方法删除该元素
-    chats.value.splice(indexToDelete, 1)
+    sessions.value.splice(indexToDelete, 1)
   }
 
-  session_id.value = chats.value[0].session_id
-  await checkSession(session_id.value)
+  active.session_id = sessions.value[0].session_id
+  await checkSession(active.session_id)
 }
 
 
-const listSession = async () => {
+function loadStore() {
+  const activeStore = localStorage.getItem('active')
+  if (activeStore) {
+    const tmp = JSON.parse(activeStore)
+    active.title = tmp.title
+    active.session_id = tmp.session_id
+  }
+
+  const messagesStore = localStorage.getItem(active.session_id)
+  if (messagesStore) {
+    messages.value = JSON.parse(messagesStore)
+  }
+}
+
+
+const initSessions = async () => {
   const response = await ChatsService.listSession()
   if (response.data && response.data.length > 0) {
-    session_id.value = getSessionId() || response.data[0].session_id
-    await checkSession(session_id.value)
-    chats.value = response.data
+    sessions.value = response.data
+
+    if (active.session_id === '') {
+      await checkSession(response.data[0].session_id)
+    }
   }
 
   UsersService.me().then((r) => {
@@ -187,21 +185,15 @@ const listSession = async () => {
     me.avatar = r.data?.avatar || ''
   })
 }
-const setSessionId = (sid: string) => {
-  if (sid) localStorage.setItem('session_id', sid)
-}
 
-const getSessionId = () => {
-  let sid = localStorage.getItem('session_id')
-  if (sid === 'undefined') {
-    localStorage.removeItem('session_id')
-    sid = ''
-  }
-  return sid
+const chatStore = () => {
+  localStorage.setItem('active', JSON.stringify(active))
+  localStorage.setItem(active.session_id, JSON.stringify(messages.value))
 }
 
 onMounted(() => {
-  listSession()
+  loadStore()
+  initSessions()
 })
 </script>
 

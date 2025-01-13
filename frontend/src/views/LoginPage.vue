@@ -11,6 +11,7 @@
       <van-field
         v-model="username"
         label="用户名"
+        label-width="60px"
         placeholder="请输入用户名"
         left-icon="user-o"
         clearable
@@ -20,6 +21,7 @@
         v-model="password"
         type="password"
         label="密码"
+        label-width="60px"
         placeholder="请输入密码"
         left-icon="lock"
         clearable
@@ -91,7 +93,7 @@ const forgotPassword = () => {
 
 onMounted(async () => {
   if (isLogin()) {
-    // await router.push('/')
+    await router.push('/')
   }
 })
 
@@ -102,13 +104,12 @@ onMounted(async () => {
   height: 100vh;
   display: flex;
   justify-content: center;
-  align-items: center;
 }
 
 
 .form-container {
-  margin: 20px;
-  width: fit-content;
+  padding-top: 100px;
+  width: 300px;
 }
 
 .login-button {

@@ -32,13 +32,13 @@ export type ChatRequest = {
     stream?: boolean;
 };
 
-export type HttpValidationError = {
-    detail?: Array<ValidationError>;
+export type ChatSession = {
+    title: string;
+    session_id: string;
 };
 
-export type Item = {
-    name: string;
-    price: number;
+export type HttpValidationError = {
+    detail?: Array<ValidationError>;
 };
 
 export type OAuth2CellphoneRequest = {
@@ -62,19 +62,10 @@ export type OAuth2PasswordRequest = {
     client_secret?: string;
 };
 
-export type ResponseMessage = {
-    message: string;
-};
-
 export type Token = {
     token_type: string;
     expires_in: number;
     access_token: string;
-};
-
-export type User = {
-    username: string;
-    email: string;
 };
 
 export type UserDetail = {
@@ -96,67 +87,14 @@ export type ValidationError = {
     type: string;
 };
 
-export type IndexData = {
+export type GetData = {
     body?: never;
     path?: never;
     query?: never;
     url: '/api/demo/';
 };
 
-export type IndexResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type DbTestData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/demo/db_test';
-};
-
-export type DbTestResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type RedisTestData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/demo/redis_test';
-};
-
-export type RedisTestResponses = {
-    /**
-     * Successful Response
-     */
-    200: unknown;
-};
-
-export type ShowData = {
-    body?: never;
-    path: {
-        demo_id: string;
-    };
-    query?: never;
-    url: '/api/demo/{demo_id}';
-};
-
-export type ShowErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type ShowError = ShowErrors[keyof ShowErrors];
-
-export type ShowResponses = {
+export type GetResponses = {
     /**
      * Successful Response
      */
@@ -286,7 +224,7 @@ export type NewSessionResponses = {
     /**
      * Successful Response
      */
-    200: ChatBase;
+    200: ChatSession;
 };
 
 export type NewSessionResponse = NewSessionResponses[keyof NewSessionResponses];
@@ -354,10 +292,37 @@ export type ListSessionResponses = {
     /**
      * Successful Response
      */
-    200: Array<ChatBase>;
+    200: Array<ChatSession>;
 };
 
 export type ListSessionResponse = ListSessionResponses[keyof ListSessionResponses];
+
+export type TitleData = {
+    body?: never;
+    path?: never;
+    query: {
+        session_id: string;
+    };
+    url: '/api/chats/title';
+};
+
+export type TitleErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type TitleError = TitleErrors[keyof TitleErrors];
+
+export type TitleResponses = {
+    /**
+     * Successful Response
+     */
+    200: ChatSession;
+};
+
+export type TitleResponse = TitleResponses[keyof TitleResponses];
 
 export type AskData = {
     body: ChatRequest;
@@ -455,69 +420,3 @@ export type GetEventsResponses = {
      */
     200: unknown;
 };
-
-export type CreateItemData = {
-    body: Item;
-    path?: never;
-    query?: never;
-    url: '/items/';
-};
-
-export type CreateItemErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateItemError = CreateItemErrors[keyof CreateItemErrors];
-
-export type CreateItemResponses = {
-    /**
-     * Successful Response
-     */
-    200: ResponseMessage;
-};
-
-export type CreateItemResponse = CreateItemResponses[keyof CreateItemResponses];
-
-export type GetItemsData = {
-    body?: never;
-    path?: never;
-    query?: never;
-    url: '/api/items/';
-};
-
-export type GetItemsResponses = {
-    /**
-     * Successful Response
-     */
-    200: Array<Item>;
-};
-
-export type GetItemsResponse = GetItemsResponses[keyof GetItemsResponses];
-
-export type CreateUserData = {
-    body: User;
-    path?: never;
-    query?: never;
-    url: '/users/';
-};
-
-export type CreateUserErrors = {
-    /**
-     * Validation Error
-     */
-    422: HttpValidationError;
-};
-
-export type CreateUserError = CreateUserErrors[keyof CreateUserErrors];
-
-export type CreateUserResponses = {
-    /**
-     * Successful Response
-     */
-    200: ResponseMessage;
-};
-
-export type CreateUserResponse = CreateUserResponses[keyof CreateUserResponses];

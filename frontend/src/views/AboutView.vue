@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
-import { client, ItemsService, UsersService } from '@/client'
+import { client, UsersService } from '@/client'
 
 const baseUrl = import.meta.env.VITE_APP_BASE_URL
 
@@ -43,11 +43,6 @@ const loadData = async () => {
 
   loading.value = true
 
-  ItemsService.getItems().then((r) => {
-    console.log('------------------------')
-    console.log(r.data)
-    // messages.value = r.data;
-  })
 }
 onMounted(()=>{
   UsersService.me().then((r) => {

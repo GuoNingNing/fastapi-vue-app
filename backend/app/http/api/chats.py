@@ -1,7 +1,6 @@
 import json
 import logging
 import os.path
-import time
 import uuid
 from typing import List, Dict
 
@@ -16,21 +15,14 @@ from app.http import deps
 from app.http.deps import get_db
 from app.models.chat import Chat
 from app.models.user import User
-from app.schemas.chat import ChatBase
+from app.schemas.chat import ChatBase, ChatSession
 from app.schemas.msg import MsgBase
+from app.support import gpt
 from config.config import settings as app_settings
-from config.database import openai_settings
 from utils import files
 
 router = APIRouter(
     prefix="/chats"
-)
-
-from openai import OpenAI
-
-__client = OpenAI(
-    base_url=openai_settings.OPENAI_BASE_URL,  # This is the default and can be omitted
-    api_key=openai_settings.OPENAI_API_KEY,  # This is the default and can be omitted
 )
 
 cookies_path = os.path.join(app_settings.BASE_PATH, "storage", "cookies.txt")
@@ -48,12 +40,12 @@ class ChatRequest(BaseModel):
     stream: bool = False
 
 
-@router.get("/new", response_model=ChatBase, dependencies=[Depends(get_db)])
+@router.get("/new", response_model=ChatSession, dependencies=[Depends(get_db)])
 def new_session(auth_user: User = Depends(deps.get_auth_user)):
-    chat = Chat(user_id=auth_user.id, session_id=uuid.uuid4().hex)
+    chat = Chat.create(user_id=auth_user.id, session_id=uuid.uuid4().hex)
     logging.info(f"New session created: {chat}")
     chat.save()
-    return chat
+    return chat.__data__
 
 
 @router.get("/del", dependencies=[Depends(get_db)])
@@ -69,10 +61,38 @@ def get_session(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
     return Chat.get_or_none(user_id=auth_user.id, session_id=session_id)
 
 
-@router.get("/list", response_model=list[ChatBase], dependencies=[Depends(get_db)])
+@router.get("/list", response_model=list[ChatSession], dependencies=[Depends(get_db)])
 def list_session(auth_user: User = Depends(deps.get_auth_user)):
-    # 使用列表推导式获取所有 session_id
-    return list(Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc()))
+    """
+    获取所有session
+    :param auth_user:
+    :return:
+    """
+
+    chats = Chat.filter(user_id=auth_user.id).order_by(Chat.created_at.desc())
+    return [c.__data__ for c in chats]
+
+
+@router.get("/title", response_model=ChatSession, dependencies=[Depends(get_db)])
+def title(session_id: str, auth_user: User = Depends(deps.get_auth_user)):
+    """
+    生成标题
+    :param session_id:
+    :param auth_user:
+    :return:
+    """
+    prompt = "请根据我们的对话，提取出一个不超过5个字的标题（可以加一些趣味性的emij）。请仅输出标题，不要有任何别的描述。"
+
+    chat = Chat.get(user_id=auth_user.id, session_id=session_id)
+
+    if chat is None:
+        return {"title": 'New Chat', "session_id": session_id}
+
+    messages = json.loads(chat.message)
+    messages.append(MsgBase.user(prompt))
+    chat.title = list(gpt.text(messages, False))[0]
+    chat.update(title=chat.title).where(Chat.id == chat.id).execute()
+    return {"title": chat.title, "session_id": session_id}
 
 
 @router.websocket("/ws")
@@ -87,6 +107,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(..., alias
             data = await websocket.receive_json()
             chatR = ChatRequest(**data)
 
+            logging.info(f"Received message: {chatR}")
             if chatR.session_id is None:
                 chatR.session_id = uuid.uuid4().hex
             chat = Chat.get_or_create(user_id=auth_user.id, session_id=chatR.session_id)[0]
@@ -95,18 +116,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(..., alias
             messages.append(MsgBase.user(chatR.content))
             logging.info(f"Asking user {auth_user.id}: {messages}")
 
-            response = __client.chat.completions.create(
-                messages=messages,
-                model="gpt-4o-mini",
-                stream=True
-            )
-
             __content = ""
-            for chunk in response:
-                if len(chunk.choices) > 0:
-                    _c = chunk.choices[0].delta.content or ""
-                    __content += _c
-                    await websocket.send_text(_c)
+            for text in gpt.text(messages, True):
+                __content += text
+                await websocket.send_text(text)
 
             replay = MsgBase.assistant(__content)
             messages.append(replay)
@@ -124,33 +137,25 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(..., alias
 
 @router.post("/ask", dependencies=[Depends(get_db)])
 def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
-    if chatR.session_id is None:
+    logging.info(f"Received message: {chatR}")
+
+    if chatR.session_id is None or chatR.session_id == '':
         chatR.session_id = uuid.uuid4().hex
     chat = Chat.get_or_create(user_id=auth_user.id, session_id=chatR.session_id)[0]
 
     messages = json.loads(chat.message)
-
     messages.append(MsgBase.user(chatR.content))
-    # 添加当前用户的新消息
-    logging.info(f"Asking user {auth_user.id}: {messages}")
-    # 调用模型，发送历史消息
-    response = __client.chat.completions.create(
-        messages=messages,
-        model="gpt-4o-mini",
-        stream=chatR.stream
-    )
 
     async def __event_stream():
         __content = ""
-        for chunk in response:
-            if len(chunk.choices) > 0 and chunk.choices[0].delta.content is not None:
-                __content += chunk.choices[0].delta.content
-                yield chunk.choices[0].delta.content or ""
+        for text in gpt.text(messages, True):
+            __content += text
+            yield text
 
         messages.append(MsgBase.assistant(__content))
 
     def __save_data(data):
-        logging.info(f"Saved message: {data}")
+        logging.debug(f"Saved message: {data}")
         chat.message = json.dumps(data)
         chat.save()
 
@@ -160,10 +165,10 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
                                  media_type="text/event-stream",
                                  background=BackgroundTask(__save_data, data=messages))
     else:
-        msg = response.choices[0].message
-        messages.append(msg.dict())
+        msg = list(gpt.text(messages))
+        messages.append(MsgBase.assistant(msg[0]))
         __save_data(messages)
-        return msg.content
+        return msg[0]
 
 
 @router.post("/set_sys_prompt", dependencies=[Depends(get_db)])
@@ -185,15 +190,3 @@ def get_sys_prompt(auth_user: User = Depends(deps.get_auth_user)):
 @router.post("/set_cookies", dependencies=[Depends(get_db)])
 async def set_cookies(cookies: str = Body(..., embed=True), auth_user: User = Depends(deps.get_auth_user)):
     files.write_file(cookies_path, cookies)
-
-
-# 事件流生成器
-def event_stream():
-    while True:
-        time.sleep(1)
-        yield f"data: {time.time()}\n\n"
-
-
-@router.get("/events")
-async def get_events():
-    return StreamingResponse(event_stream(), media_type="text/event-stream")
