@@ -152,7 +152,10 @@ def ask(chatR: ChatRequest, auth_user: User = Depends(deps.get_auth_user)):
             __content += text
             yield text
 
-        messages.append(MsgBase.assistant(__content))
+        __msg = MsgBase.assistant(__content)
+        yield f"#END#{__msg['timestamp']}"
+
+        messages.append(__msg)
 
     def __save_data(data):
         logging.debug(f"Saved message: {data}")

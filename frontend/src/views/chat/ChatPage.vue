@@ -2,7 +2,7 @@
   <div class="chat-page">
     <van-nav-bar :title="active.title" left-arrow @click-left="showDrawer = true">
       <template #left>
-        <van-icon name="ellipsis" size="24"/>
+        <van-icon name="ellipsis" size="24" />
       </template>
       <template #right>
         <van-icon size="24" @click="newSession" name="add-o" />
@@ -104,10 +104,13 @@ const sendMessage = async (text: string) => {
     '/api/chats/ask',
     { session_id: active.session_id, content: text, stream: true },
     (data: string) => {
-      replay.content += data
+      if (data.startsWith('#END#')) {
+        replay.timestamp = data.split('#END#')[1]
+      } else {
+        replay.content += data
+      }
     }
   ).finally(() => {
-    replay.timestamp = new Date(Date.now()).toLocaleString()
     if (active.title === 'New Chat' && active.session_id !== '') {
       ChatsService.title({ query: { session_id: active.session_id } }).then((res) => {
         console.log('title:', res)
