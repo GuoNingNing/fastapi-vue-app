@@ -5,7 +5,6 @@
         v-model="text"
         type="textarea"
         :rows="row"
-        autosize
         @keydown.enter.prevent="handleEnter"
         class="message-input"
         placeholder="请输入"
@@ -24,10 +23,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useToggle } from '@vant/use';
+import { ref } from 'vue'
 
-const row = computed(() => /Mobi|Android/i.test(navigator.userAgent) ? 1 : 3)
+const isMobile = () => {
+  const i = /Mobi|Android/i.test(navigator.userAgent)
+  console.log('isMobile: ', i)
+  return i
+}
+
+const row = ref(isMobile() ? 1 : 3)
 
 
 const emit = defineEmits(['send'])
@@ -47,19 +51,11 @@ defineProps({
 const handleEnter = (event: KeyboardEvent) => {
   if (event.key === 'Enter') {
     event.preventDefault() // 阻止默认的换行行为
-    if (event.shiftKey) {
 
-      row.value += 1
-
+    if (event.shiftKey || isMobile()) {
+      text.value += '\n'
       const textArea = event.target as HTMLTextAreaElement
-      const start = textArea.selectionStart
-      const end = textArea.selectionEnd
-
-      // 在当前光标位置插入换行符
-      textArea.value = textArea.value.substring(0, start) + '\n' + textArea.value.substring(end)
-
-      // 更新光标位置到换行符后面
-      textArea.selectionStart = textArea.selectionEnd = start + 1
+      textArea.selectionStart = text.value.length + 1
     } else {
       send() // 调用发送功能
     }
@@ -67,7 +63,7 @@ const handleEnter = (event: KeyboardEvent) => {
 }
 
 const send = () => {
-  row.value = 3
+  row.value = isMobile() ? 1 : 3
   if (!text.value.trim()) return
   emit('send', text.value)
   text.value = ''

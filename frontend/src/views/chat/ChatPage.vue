@@ -2,10 +2,10 @@
   <div class="chat-page">
     <van-nav-bar :title="active.title" left-arrow @click-left="showDrawer = true">
       <template #left>
-        <van-icon name="more-o" size="24" />
+        <van-icon name="ellipsis" size="24"/>
       </template>
       <template #right>
-        <van-icon size="24" @click="newSession" name="chat-o" />
+        <van-icon size="24" @click="newSession" name="add-o" />
       </template>
     </van-nav-bar>
     <!-- 聊天区域 -->
@@ -140,13 +140,9 @@ const newSession = async () => {
     return
   }
   const response = await ChatsService.newSession()
-  console.log('newSession:', response)
   active.title = response.data?.title || 'New Chat'
   active.session_id = response.data?.session_id || ''
-
-  // sessions.value.unshift(active)
-
-  showToast(active.title + active.session_id)
+  showToast(active.title)
   messages.value = []
   showDrawer.value = false
   chatStore()
