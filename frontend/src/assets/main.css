@@ -1,29 +1,5 @@
-/*@import './base.css';*/
-/*!*@import "./font/index.css";*!*/
-/*#app {*/
-/*    max-width: 1280px;*/
-/*    margin: 0 auto;*/
-/*    padding: 0 2rem;*/
-/*    font-weight: normal;*/
-/*}*/
+@import './base.css';
+/*@import "./font/index.css";*/
+#app {
 
-/*.code-toolbar {*/
-/*    height: 35px;*/
-/*    line-height: 35px;*/
-/*    background-color: aliceblue;*/
-/*    padding: 0 10px*/
-/*}*/
-
-/*.copy-button {*/
-/*    float: right;*/
-/*    height: 25px;*/
-/*    line-height: 25px;*/
-/*    border: none;*/
-/*    padding: 0 10px;*/
-/*    margin: 5px;*/
-/*    cursor: pointer;*/
-/*    background-color: antiquewhite;*/
-/*}*/
-/*.copy-button:hover {*/
-/*    background-color: #45a049; !* 悬停时改变背景色 *!*/
-/*}*/
+}

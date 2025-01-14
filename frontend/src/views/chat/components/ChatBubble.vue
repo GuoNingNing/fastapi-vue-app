@@ -42,7 +42,6 @@ const timestamp = computed(() =>
   max-width: 70%;
   background-color: #07c160;
   margin-left: auto;
-  text-align: right;
 }
 
 .gpt {

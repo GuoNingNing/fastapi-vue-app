@@ -1,26 +1,28 @@
 <template>
-  <div id="app">
+  <div id="main"  class="app-container">
     <router-view />
   </div>
 </template>
 
 <script lang="ts">
 
-import { client } from '@/client'
+import { useWindowSize } from '@vant/use'
+import { computed, onMounted } from 'vue'
 
 export default {
-  name: 'App'
-}
+  name: 'App',
+  setup() {
+    const { width, height } = useWindowSize()
+    const appWidth = computed(() => `${width.value}px`)
+    const appHeight = computed(() => `${height.value}px`)
 
-const baseUrl = import.meta.env.VITE_APP_BASE_URL
+    // onMounted(() => {
+    //   console.log('App mounted')
+    //   // DOM加载完毕，向上滚动一个像素
+    //   window.scrollTo(0, 100)
+    // })
 
-client.setConfig({
-  baseURL: baseUrl,  // 设置你的 API 基础 URL
-  timeout: 100000,  // 设置请求超时时间
-  // set default headers for requests
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem('access_token')}`
+    return { appWidth, appHeight }
   }
-})
-
+}
 </script>
