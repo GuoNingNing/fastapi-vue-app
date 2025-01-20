@@ -45,11 +45,11 @@
       </template>
       <template #footer>
         <van-row>
-          <van-col span="20" style="background-color: #07c160">
-            {{ me.username }}
-          </van-col>
-          <van-col span="4">
+          <van-col span="2">
             <van-icon name="https://fastly.jsdelivr.net/npm/@vant/assets/icon-demo.png" />
+          </van-col>
+          <van-col span="22" >
+            {{ me.username }}
           </van-col>
         </van-row>
       </template>
@@ -57,8 +57,7 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+<script setup lang="ts">import { onMounted, reactive, ref } from 'vue'
 import ChatBubble from './components/ChatBubble.vue'
 import MessageInput from './components/MessageInput.vue'
 import SideMenu from '@/views/chat/components/SideMenu.vue'
